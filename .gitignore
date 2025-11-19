@@ -1,3 +1,19 @@
+# General
+.DS_Store
+.idea/
+.vscode/
+.cursor/
+.cursorignore
+.cursorindexingignore
+.cursorignore
+
+# Environment
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
