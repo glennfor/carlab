@@ -56,10 +56,23 @@ pip install -q -U google-genai
 
 sudo apt install python3-pyaudio
 
-python -m actions.controllers.example_usage
-python -m tts.example_online
 
-python tts/example_offline.py
+Run Tests
+==============
+python -m actions.controllers.example_usage
+python -m tts.example_online(python tts/example_offline.py)
+
+
+APi Key
+======
+export GEMINI_API_KEY="AIzaSyDKx9rdI9wRMb5lv0DXNeWaIAUYzziR6mo"
+
+
+Virtual env: python3 -m venv venv
+==========
+source venv/bin/activate
+deactivate
+
 
 
 Intalling pyaudio(in virtual env)
