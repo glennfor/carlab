@@ -13,7 +13,7 @@ Prerequisites:
 import os
 import time
 
-from tts.google_tts import (GoogleTTS, speak, speak_async, speak_from_prompt,
+from .google_tts import (GoogleTTS, speak, speak_async, speak_from_prompt,
                             speak_from_prompt_async)
 
 
@@ -111,6 +111,14 @@ def example_advanced_usage():
     """Example of advanced usage with custom instance."""
     print("Example 6: Advanced Usage with Custom Instance")
     
+    text = '''
+    At Princeton University, **ECE 302** is a laboratory-based course called **Robotic and Autonomous Systems Lab**. The course is centered around a semester-long design project, typically involving building a computer-controlled vehicle. It integrates concepts from microprocessors, communications, and control systems.
+
+ECE 302 usually requires **ECE 201** and **ECE 203** as prerequisites and is part of the junior-year design requirement for Electrical and Computer Engineering majors. The course is hands-on and project-focused, and many students consider the “Car Lab” projects a highlight, as they get to design, build, and program autonomous vehicles in teams.
+
+If you want, I can summarize what a typical semester looks like in ECE 302, including the kind of assignments and projects students do.
+
+    '''
     try:
         # Create custom TTS instance
         tts = GoogleTTS(
@@ -120,14 +128,14 @@ def example_advanced_usage():
         )
         
         print("Using custom TTS instance...")
-        tts.speak("This is using a custom TTS instance.")
+        tts.speak(text)
         
         # Use async methods
-        thread = tts.speak_async("This is async with custom instance.")
-        thread.join()
+        # thread = tts.speak_async("This is async with custom instance.")
+        # thread.join()
         
-        # Prompt-to-speech with custom instance
-        tts.speak_from_prompt("Tell me a fun fact about space.")
+        # # Prompt-to-speech with custom instance
+        # tts.speak_from_prompt("Tell me a fun fact about space.")
         
         # Clean up
         tts.close()
