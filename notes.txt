@@ -1,0 +1,48 @@
+Libraries: Ensure evdev and pigpio are installed:
+
+Bash
+
+sudo apt install python3-evdev python3-pigpio
+pigpio Daemon: Make sure the pigpiod service is running:
+
+Bash
+
+sudo systemctl start pigpiod
+Controller Path: You may need to adjust the GAMEPAD_DEVICE_PATH if your 
+controller is not at /dev/input/event0. You can find the correct path by running
+ls /dev/input/by-id/ after connecting your controller.
+
+
+sudo apt update
+sudo apt install evtest
+
+sudo apt update
+sudo apt install raspi-gpio
+
+
+TO find it:
+
+ sudo evtest
+
+ ========
+
+
+ DEFAULT_AXES = {
+    ecodes.ABS_X:  ("Left Stick X", -32768, 32767),
+    ecodes.ABS_Y:  ("Left Stick Y", -32768, 32767),
+    ecodes.ABS_RX: ("Right Stick X", -32768, 32767),
+    ecodes.ABS_RY: ("Right Stick Y", -32768, 32767),
+    ecodes.ABS_Z:  ("Left Trigger", 0, 255),
+    ecodes.ABS_RZ: ("Right Trigger", 0, 255),
+    ecodes.ABS_HAT0X: ("D-Pad X", -1, 1),
+    ecodes.ABS_HAT0Y: ("D-Pad Y", -1, 1),
+}
+
+
+sensor.py
+
+motor_controller.py
+
+camera.py
+
+brain.py
