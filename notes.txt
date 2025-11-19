@@ -46,3 +46,8 @@ motor_controller.py
 camera.py
 
 brain.py
+
+
+
+pip install -U langchain
+# Requires Python 3.10+

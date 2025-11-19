@@ -48,11 +48,11 @@ class Motor:
         self.set_speed(abs(velocity))
 
         # set direction
-        direction = DIRECTIONS.stop
+        direction = self.DIRECTIONS.stop
         if velocity > 0:
-            direction = DIRECTIONS.forward
+            direction = self.DIRECTIONS.forward
         elif velocity < 0:
-            direction = DIRECTIONS.backward
+            direction = self.DIRECTIONS.backward
         self.set_direction(direction)
 
 

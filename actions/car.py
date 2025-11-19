@@ -115,7 +115,7 @@ class Car:
         self.drive(0, 0, rotation)
 
     def cleanup(self):
-        for wheel in self.wheels:
+        for wheel in self.wheels.values():
             wheel.cleanup()
         GPIO.cleanup()
 
