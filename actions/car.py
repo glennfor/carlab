@@ -1,17 +1,23 @@
 import RPi.GPIO as GPIO
-from motor import Motor
+from .motor import Motor
 
 
 class Car:
+    # # MOTOR 1 (M1) - ASSUMED PINS: PWM:12, FWD:20, REV:16
+    # M1_PWM_PIN = 12
+    # M1_IN1_PIN = 20
+    # M1_IN2_PIN = 16
+
     # MOTOR 1 (M1) - ASSUMED PINS: PWM:12, FWD:20, REV:16
-    M1_PWM_PIN = 12
-    M1_IN1_PIN = 20
-    M1_IN2_PIN = 16
+    M1_PWM_PIN = 16
+    M1_IN1_PIN = 21
+    M1_IN2_PIN = 20
+
 
     # MOTOR 2 (M2) - ASSUMED PINS: PWM:18, FWD:14, 10(REV)->15
     M2_PWM_PIN = 18
-    M2_IN1_PIN = 14
-    M2_IN2_PIN = 15
+    M2_IN1_PIN = 23
+    M2_IN2_PIN = 24
 
     # MOTOR 3 (M3) - ASSUMED PINS: PWM:13, FWD:5, 31(REV)->6
     M3_PWM_PIN = 13
@@ -34,6 +40,7 @@ class Car:
             Wheel 2         Wheel 3
             (Back-Left)     (Back-Right)
         '''
+        GPIO.setmode(GPIO.BCM)
         self.wheels = {
             'Front': Motor(self.M1_PWM_PIN, self.M1_IN1_PIN, self.M1_IN2_PIN), 
             'Left': Motor(self.M2_PWM_PIN, self.M2_IN1_PIN, self.M2_IN2_PIN), 
@@ -42,9 +49,7 @@ class Car:
         self.init()
 
     def init(self):
-        for wheel in self.wheels.values():
-            wheel.init()
-        GPIO.setmode(GPIO.BCM)
+        pass
     
     def drive(self, vx, vy, rotation):
 
@@ -118,10 +123,3 @@ class Car:
         for wheel in self.wheels.values():
             wheel.cleanup()
         GPIO.cleanup()
-
-class CarController:
-    def __init__(self, car):
-        self.car = car
-
-    def move(self, velocity, direction):
-        self.car.move(velocity, direction)

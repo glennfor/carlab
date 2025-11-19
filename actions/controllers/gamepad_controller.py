@@ -26,6 +26,12 @@ class GamepadController(BaseController):
         self.axis_x_code = ecodes.ABS_X
         self.axis_y_code = ecodes.ABS_Y
         self.axis_rot_code = ecodes.ABS_RX
+
+        FALLBACK_AXES_INFO = {
+            self.axis_x_code:   {'min': 0, 'max': 65535, 'flat': 2000}, # 2000 is a standard deadzone
+            self.axis_y_code:   {'min': 0, 'max': 65535, 'flat': 2000},
+            self.axis_rot_code: {'min': 0, 'max': 65535, 'flat': 2000},
+        }
         
         self.controller_state = {
             'vx': 0.0,
@@ -33,7 +39,7 @@ class GamepadController(BaseController):
             'rotation': 0.0
         }
         
-        self.axis_info = {}
+        self.axis_info = FALLBACK_AXES_INFO
         self.deadzone = 0.1
         self.max_speed = 1.0
     
@@ -42,8 +48,8 @@ class GamepadController(BaseController):
         if axis_code not in self.axis_info:
             return 0.0
         
-        axis_min = self.axis_info[axis_code].min
-        axis_max = self.axis_info[axis_code].max
+        axis_min = self.axis_info[axis_code]['min']
+        axis_max = self.axis_info[axis_code]['max']
         axis_range = axis_max - axis_min
         
         if axis_range == 0:
@@ -52,6 +58,8 @@ class GamepadController(BaseController):
         normalized = (value - axis_min) / axis_range * 2.0 - 1.0
         normalized = max(-1.0, min(1.0, normalized))
         
+        print(f"Normalizing axis: axis_code: {axis_code}", f"value: {value}", f"normalized: {normalized}")
+
         if abs(normalized) < self.deadzone:
             return 0.0
         
@@ -59,34 +67,35 @@ class GamepadController(BaseController):
     
     def _read_gamepad_loop(self):
         """Main loop for reading gamepad events."""
-        try:
-            for event in self.device.read_loop():
-                if not self.running:
-                    break
-                
-                if event.type == ecodes.EV_ABS:
-                    if event.code == self.axis_x_code:
-                        self.controller_state['vx'] = self._normalize_axis(event.value, event.code)
-                    elif event.code == self.axis_y_code:
-                        self.controller_state['vy'] = -self._normalize_axis(event.value, event.code)
-                    elif event.code == self.axis_rot_code:
-                        self.controller_state['rotation'] = self._normalize_axis(event.value, event.code)
-        except OSError:
-            pass
+        while self.running:
+            try:
+                for event in self.device.read():
+                    if event.type == ecodes.EV_ABS:
+                        print(f"event.code: {event.code}", f"event.value: {event.value}", f"self.axis_x_code: {self.axis_x_code}", f"self.axis_y_code: {self.axis_y_code}", f"self.axis_rot_code: {self.axis_rot_code}")
+                        if event.code == self.axis_x_code:
+                            self.controller_state['vx'] = self._normalize_axis(event.value, event.code)
+                        elif event.code == self.axis_y_code:
+                            self.controller_state['vy'] = self._normalize_axis(event.value, event.code)
+                        elif event.code == self.axis_rot_code:
+                            self.controller_state['rotation'] = self._normalize_axis(event.value, event.code)
+                        else:
+                            print(f"Unknown event: {event}")
+            except OSError:
+                pass
     
     def start(self):
         """Start the gamepad controller."""
         if self.is_available():
             try:
                 self.device = InputDevice(self.device_path)
-                self.axis_info = self.device.absinfo()
+                # self.axis_info = self.device.absinfo()
                 
-                if self.axis_x_code not in self.axis_info:
-                    self.axis_x_code = ecodes.ABS_X
-                if self.axis_y_code not in self.axis_info:
-                    self.axis_y_code = ecodes.ABS_Y
-                if self.axis_rot_code not in self.axis_info:
-                    self.axis_rot_code = ecodes.ABS_RX
+                # if self.axis_x_code not in self.axis_info:
+                #     self.axis_x_code = ecodes.ABS_X
+                # if self.axis_y_code not in self.axis_info:
+                #     self.axis_y_code = ecodes.ABS_Y
+                # if self.axis_rot_code not in self.axis_info:
+                #     self.axis_rot_code = ecodes.ABS_RX
                 
                 self.running = True
                 self.thread = threading.Thread(target=self._read_gamepad_loop, daemon=True)
@@ -119,7 +128,6 @@ class GamepadController(BaseController):
             vy=self.controller_state['vy'],
             rotation=self.controller_state['rotation']
         )
-        
         return cmd if not cmd.is_zero() else None
     
     def is_available(self) -> bool:

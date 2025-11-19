@@ -24,6 +24,7 @@ class Motor:
         self.init()
 
     def init(self):
+        GPIO.setup(self.pwm_pin, GPIO.OUT)
         self.pwm = GPIO.PWM(self.pwm_pin, self.PWM_FREQUENCY)
         self.pwm.start(0)
         GPIO.setup(self.ina_pin, GPIO.OUT)

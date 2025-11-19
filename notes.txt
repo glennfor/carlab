@@ -51,3 +51,6 @@ brain.py
 
 pip install -U langchain
 # Requires Python 3.10+
+
+
+python -m actions.controllers.example_usage
