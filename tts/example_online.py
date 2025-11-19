@@ -11,10 +11,18 @@ Prerequisites:
 """
 
 import os
+import sys
 import time
 
-from .google_tts import (GoogleTTS, speak, speak_async, speak_from_prompt,
-                            speak_from_prompt_async)
+# Handle both direct execution and module import
+try:
+    from .google_tts import (GoogleTTS, speak, speak_async, speak_from_prompt,
+                             speak_from_prompt_async)
+except ImportError:
+    # If relative import fails, try absolute import
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from tts.google_tts import (GoogleTTS, speak, speak_async,
+                                speak_from_prompt, speak_from_prompt_async)
 
 
 def example_synchronous_tts():
@@ -178,6 +186,40 @@ def example_interactive():
             print("Invalid mode. Choose 1, 2, or 'quit'.")
 
 
+def example_continuous_interactive():
+    """Example of continuous interactive TTS - continuously enter text to be spoken."""
+    print("Example 8: Continuous Interactive TTS")
+    print("=" * 60)
+    print("Enter text to speak it. Type 'quit', 'exit', or 'q' to exit.")
+    print("=" * 60)
+    print()
+    
+    try:
+        while True:
+            text = input("Enter text to speak (or 'quit' to exit): ").strip()
+            
+            if not text:
+                continue
+            
+            # Check for quit commands
+            if text.lower() in ['quit', 'exit', 'q']:
+                print("Exiting...")
+                break
+            
+            # Speak the text
+            try:
+                print(f"Speaking: {text}")
+                speak(text)
+                print("Done.\n")
+            except Exception as e:
+                print(f"Error: {e}\n")
+    
+    except KeyboardInterrupt:
+        print("\n\nInterrupted by user.")
+    except Exception as e:
+        print(f"\nError: {e}")
+
+
 def check_api_key():
     """Check if API key is configured."""
     api_key = os.getenv("GEMINI_API_KEY")
@@ -218,8 +260,9 @@ if __name__ == "__main__":
         
         example_advanced_usage()
         
-        # Uncomment to run interactive example
+        # Uncomment to run interactive examples
         # example_interactive()
+        # example_continuous_interactive()
         
         print("=" * 60)
         print("All examples completed!")

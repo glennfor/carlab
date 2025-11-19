@@ -67,3 +67,13 @@ Intalling pyaudio(in virtual env)
 sudo apt update
 sudo apt install portaudio19-dev python3-dev
 pip install pyaudio
+
+
+available_voices = [
+        "Kore", "Puck", "Zephyr", "Fenrir", "Charon", "Leda",
+        "Orus", "Aoede", "Enceladus", "Callirrhoe", "Iapetus",
+        "Autonoe", "Umbriel", "Algieba", "Despina", "Rasalgethi",
+        "Erinome", "Algenib", "Achernar", "Alnilam", "Pulcherrima",
+        "Laomedeia", "Schedar", "Gacrux", "Zubenelgenubi", "Vindemiatrix",
+        "Achird", "Sadachbia", "Sadaltager", "Sulafat"
+    ]
