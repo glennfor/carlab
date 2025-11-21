@@ -2,10 +2,15 @@ from collections import namedtuple
 
 import RPi.GPIO as GPIO
 
+from enum import Enum
+
+class Direction(Enum):
+    STOP = 0
+    FORWARD = 1
+    BACKWARD = -1
 
 class Motor:
     PWM_FREQUENCY = 100
-    DIRECTIONS = namedtuple('DIRECTIONS', ['forward', 'backward', 'stop'])
     def __init__(self, pwm_pin, ina_pin, inb_pin):
         '''
         Initialize the motor.
@@ -17,7 +22,7 @@ class Motor:
         self.ina_pin = ina_pin
         self.inb_pin = inb_pin
 
-        self.direction = self.DIRECTIONS.stop
+        self.direction = Direction.STOP
         self.velocity = 0
         self.speed = 0
 
@@ -44,17 +49,19 @@ class Motor:
         '''
         velocity = max(-100, min(100, velocity))
 
+        # set direction
+        direction = Direction.STOP
+        if velocity > 0:
+            direction = Direction.FORWARD
+        elif velocity < 0:
+            direction = Direction.BACKWARD
+        self.set_direction(direction)
+
         # set speed
         self.velocity = velocity
         self.set_speed(abs(velocity))
 
-        # set direction
-        direction = self.DIRECTIONS.stop
-        if velocity > 0:
-            direction = self.DIRECTIONS.forward
-        elif velocity < 0:
-            direction = self.DIRECTIONS.backward
-        self.set_direction(direction)
+        
 
 
     def set_speed(self, speed):
@@ -68,10 +75,10 @@ class Motor:
     
     def set_direction(self, direction):
         self.direction = direction
-        if direction == self.DIRECTIONS.forward:
+        if direction == Direction.FORWARD:
             GPIO.output(self.ina_pin, GPIO.HIGH)
             GPIO.output(self.inb_pin, GPIO.LOW)
-        elif direction == self.DIRECTIONS.backward:
+        elif direction == Direction.BACKWARD:
             GPIO.output(self.ina_pin, GPIO.LOW)
             GPIO.output(self.inb_pin, GPIO.HIGH)
         else:
@@ -79,13 +86,13 @@ class Motor:
             GPIO.output(self.inb_pin, GPIO.LOW)
     
     def brake(self):
-        self.set_direction(self.DIRECTIONS.stop)
+        self.set_direction(Direction.STOP)
         GPIO.output(self.ina_pin, GPIO.LOW)
         GPIO.output(self.inb_pin, GPIO.LOW)
         self.set_speed(0)
     
     def coast(self):
-        self.set_direction(self.DIRECTIONS.stop)
+        self.set_direction(Direction.STOP)
         GPIO.output(self.ina_pin, GPIO.HIGH)
         GPIO.output(self.inb_pin, GPIO.HIGH)
         self.set_speed(0)

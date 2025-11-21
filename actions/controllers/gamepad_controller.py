@@ -53,34 +53,43 @@ class GamepadController(BaseController):
         
         axis_min = self.axis_info[axis_code]['min']
         axis_max = self.axis_info[axis_code]['max']
-        axis_range = axis_max - axis_min
+        axis_center = (axis_max + axis_min) / 2
+        axis_deadzone = self.axis_info[axis_code]['flat']
+
+        true_value = value - axis_center
         
-        if axis_range == 0:
+        if abs(true_value) < axis_deadzone:
             return 0.0
         
-        normalized = (value - axis_min) / axis_range * 2.0 - 1.0
+        normalized = true_value / ((axis_max - axis_min) / 2.0)
         normalized = max(-1.0, min(1.0, normalized))
         
         print(f"Normalizing axis: axis_code: {axis_code}", f"value: {value}", f"normalized: {normalized}")
-
-        if abs(normalized) < self.deadzone:
-            return 0.0
         
         return normalized * self.max_speed
+        # normalized = (value - axis_min) / axis_range * 2.0 - 1.0
+        # normalized = max(-1.0, min(1.0, normalized))
+        
+        # print(f"Normalizing axis: axis_code: {axis_code}", f"value: {value}", f"normalized: {normalized}")
+
+        # if abs(normalized) < self.deadzone:
+        #     return 0.0
+        
+        # return normalized * self.max_speed
     
     def _read_gamepad_loop(self):
         """Main loop for reading gamepad events."""
         while self.running:
             try:
-                for event in self.device.read():
+                for event in self.device.read_loop():
                     if event.type == ecodes.EV_ABS:
                         print(f"event.code: {event.code}", f"event.value: {event.value}", f"self.axis_x_code: {self.axis_x_code}", f"self.axis_y_code: {self.axis_y_code}", f"self.axis_rot_code: {self.axis_rot_code}")
                         if event.code == self.axis_x_code:
                             self.controller_state['vx'] = self._normalize_axis(event.value, event.code)
                         elif event.code == self.axis_y_code:
-                            self.controller_state['vy'] = self._normalize_axis(event.value, event.code)
+                            self.controller_state['vy'] = -self._normalize_axis(event.value, event.code)
                         elif event.code == self.axis_rot_code:
-                            self.controller_state['rotation'] = self._normalize_axis(event.value, event.code)
+                            self.controller_state['rotation'] = 0 #self._normalize_axis(event.value, event.code)
                         # elif event.code == self.axis_rot_left_code:
                         #     self.controller_state['rotation'] = -self._normalize_axis(event.value, event.code)
                         # elif event.code == self.axis_rot_right_code:

@@ -90,3 +90,10 @@ available_voices = [
         "Laomedeia", "Schedar", "Gacrux", "Zubenelgenubi", "Vindemiatrix",
         "Achird", "Sadachbia", "Sadaltager", "Sulafat"
     ]
+
+
+label 3:
+pins: 16, 20, 21
+
+label 1:
+5, 6, 13
