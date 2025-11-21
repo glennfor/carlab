@@ -5,8 +5,7 @@ This demonstrates how to set up and use multiple controllers with the Controller
 """
 
 from ..car import Car
-from . import (ControllerManager, GamepadController,
-              )
+from . import ControllerManager, GamepadController
 
 
 def main():
@@ -15,7 +14,7 @@ def main():
     
     manager = ControllerManager(car, update_rate=20.0)
     
-    gamepad = GamepadController(device_path='/dev/input/event8', priority=100)
+    gamepad = GamepadController(device_path='/dev/input/event4', priority=100)
     # keyboard = KeyboardController(priority=50)
     # opencv = OpenCVController(camera_index=0, priority=30)
     # llm = LLMController(priority=20)
