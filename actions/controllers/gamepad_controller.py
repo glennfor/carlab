@@ -43,6 +43,8 @@ class GamepadController(BaseController):
         }
         
         self.axis_info = FALLBACK_AXES_INFO
+        self.deadzone = 0.1
+        self.max_speed = 1.0
     
     def _normalize_axis(self, value: int, axis_code: int) -> float:
         """Normalize axis value to -1.0 to 1.0 range."""
@@ -93,10 +95,10 @@ class GamepadController(BaseController):
         if self.is_available():
             try:
                 self.device = InputDevice(self.device_path)
-                # for code, info in self.device.capabilities(verbose=True).get(ecodes.EV_ABS, []):
-                #     _, code_value = code
-                #     axis_info[code_value] = {'min': info[2][0], 'max': info[2][1], 'flat': info[2][3]}
-                #     (min_value, max_value, fuzz, flat, range) = info
+                for code, info in self.device.capabilities(verbose=True).get(ecodes.EV_ABS, []):
+                    _, code_value = code
+                    # axis_info[code_value] = {'min': min_value, 'max': max_value, 'flat': flat}
+                    # (min_value, max_value, fuzz, flat, range) = info
                 # self.axis_info = self.device.absinfo()
                 
                 # if self.axis_x_code not in self.axis_info:
