@@ -26,6 +26,9 @@ class GamepadController(BaseController):
         self.axis_x_code = ecodes.ABS_X
         self.axis_y_code = ecodes.ABS_Y
         self.axis_rot_code = ecodes.ABS_RX
+        self.axis_rot_left_code = ecodes.ABS_Z
+        self.axis_rot_right_code = ecodes.ABS_RZ
+        
 
         FALLBACK_AXES_INFO = {
             self.axis_x_code:   {'min': 0, 'max': 65535, 'flat': 2000}, # 2000 is a standard deadzone
@@ -40,8 +43,6 @@ class GamepadController(BaseController):
         }
         
         self.axis_info = FALLBACK_AXES_INFO
-        self.deadzone = 0.1
-        self.max_speed = 1.0
     
     def _normalize_axis(self, value: int, axis_code: int) -> float:
         """Normalize axis value to -1.0 to 1.0 range."""
@@ -78,6 +79,10 @@ class GamepadController(BaseController):
                             self.controller_state['vy'] = self._normalize_axis(event.value, event.code)
                         elif event.code == self.axis_rot_code:
                             self.controller_state['rotation'] = self._normalize_axis(event.value, event.code)
+                        # elif event.code == self.axis_rot_left_code:
+                        #     self.controller_state['rotation'] = -self._normalize_axis(event.value, event.code)
+                        # elif event.code == self.axis_rot_right_code:
+                        #     self.controller_state['rotation'] = self._normalize_axis(event.value, event.code)
                         else:
                             print(f"Unknown event: {event}")
             except OSError:
@@ -88,6 +93,10 @@ class GamepadController(BaseController):
         if self.is_available():
             try:
                 self.device = InputDevice(self.device_path)
+                # for code, info in self.device.capabilities(verbose=True).get(ecodes.EV_ABS, []):
+                #     _, code_value = code
+                #     axis_info[code_value] = {'min': info[2][0], 'max': info[2][1], 'flat': info[2][3]}
+                #     (min_value, max_value, fuzz, flat, range) = info
                 # self.axis_info = self.device.absinfo()
                 
                 # if self.axis_x_code not in self.axis_info:
