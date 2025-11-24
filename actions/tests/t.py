@@ -1,9 +1,7 @@
-import pigpio
 import time
 
+import pigpio
 
-
-# MOTOR 1 (M1) - ASSUMED PINS: PWM:13, FWD:5, REV:6
 M1_PWM_PIN = 13
 M1_INA_PIN = 5
 M1_INB_PIN = 6
@@ -47,8 +45,8 @@ pi.set_PWM_frequency(M2_PWM_PIN, 100)
 pi.set_PWM_frequency(M3_PWM_PIN, 100)
 
 print("Starting M1...")
-pi.set_PWM_dutycycle(M1_PWM_PIN, int(50 * 2.55))
-time.sleep(2)
+# pi.set_PWM_dutycycle(M1_PWM_PIN, int(50 * 2.55))
+# time.sleep(2)
 
 # print("Starting M2 (M1 should keep running)...")
 pi.set_PWM_dutycycle(M3_PWM_PIN, int(50 * 2.55))

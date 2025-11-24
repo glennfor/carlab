@@ -3,8 +3,6 @@ import pigpio
 from .motor import Motor
 
 
-from math import cos, sin, pi
-
 class Car:
 
     # MOTOR 1 (M1) - ASSUMED PINS: PWM:13, FWD:5, REV:6
@@ -14,9 +12,9 @@ class Car:
 
 
     # MOTOR 2 (M2) - ASSUMED PINS: PWM:18, FWD:24, 10(REV)->23
-    M2_PWM_PIN = 22
-    M2_INA_PIN = 17
-    M2_INB_PIN = 27
+    M2_PWM_PIN = 18
+    M2_INA_PIN = 24
+    M2_INB_PIN = 23
 
     # MOTOR 3 (M3) - ASSUMED PINS: PWM:16, FWD:21, REV:20
     M3_PWM_PIN = 16
@@ -70,18 +68,18 @@ class Car:
 
         ### OLD
         # Motor 1: Front Right
-        # S_right = 0 * vx + 1 * vy + rotation
+        S_right = 0 * vx + 1 * vy + rotation
         
-        # # Motor 2: Front Left
-        # S_left = 0.866 * vx - 0.5 * vy + rotation 
+        # Motor 2: Front Left
+        S_left = 0.866 * vx - 0.5 * vy + rotation 
 
-        # # Motor 3: Rear 
-        # S_rear = -0.866 * vx + 0.5 * vy + rotation
+        # Motor 3: Rear 
+        S_rear = -0.866 * vx + 0.5 * vy + rotation
 
 
         ### FIX C
 
-        # # Motor 1: Front Right (0°)
+        # Motor 1: Front Right (0°)
         # S_right = -0 * vx + 1 * vy + rotation
 
         # # Motor 2: Front Left (120°)
@@ -107,30 +105,12 @@ class Car:
         # S_rear = -1.0 * vx + 0 * vy + rotation
 
 
-        # Pushes Forward (+Vy) and Left (-Vx)
-        # S_right = -0.5 * vx + 0.866 * vy + rotation
+        ### FIX M
 
-        # Motor 2: Left (Front Left, ~150 degrees from X-axis)
-        # Pushes Forward (+Vy) and Right (+Vx)
-        # S_left = 0.5 * vx + 0.866 * vy + rotation
+        S_right = -vx + rotation
+        S_left  =  0.5*vx + 0.866*vy + rotation
+        S_rear  =  0.5*vx - 0.866*vy + rotation
 
-        # Motor 3: Rear (270 degrees / bottom)
-        # Pushes Left (-Vx). 
-        # Ideally contributes NOTHING to forward motion (0 * vy).
-        # S_rear = -1.0 * vx + 0 * vy + rotation
-
-        ### FIX gr
-
-        # S_right = -vx + rotation
-        # S_left  =  0.5*vx + 0.866*vy + rotation
-        # S_rear  =  0.5*vx - 0.866*vy + rotation
-
-        ## my try
-        # S_i = Vx * cos(theta_i) + Vy * sin(theta_i) + Omega
-        S_right = vx * cos(60*pi/180) + vy * sin(60*pi/180) + rotation   # anle is 60
-        S_left = vx * cos(180*pi/180 + 120*pi/180) + vy * sin(180*pi/180 + 120*pi/180) + rotation # angle 180 + 120
-        S_rear = vx * cos(180*pi/180) + vy * sin(180*pi/180) + rotation # 180 
-        
         # Normalize speeds
         max_speed_abs = max(abs(S_right), abs(S_left), abs(S_rear), 1.0)
         
@@ -181,5 +161,5 @@ class Car:
     def cleanup(self):
         for wheel in self.wheels.values():
             wheel.cleanup()
-        if self.pi.connected:
+        if self.pi and self.pi.connected:
             self.pi.stop()
