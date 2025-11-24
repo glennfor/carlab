@@ -66,6 +66,7 @@ python -m tts.example_online(python tts/example_offline.py)
 APi Key
 ======
 export GEMINI_API_KEY="AIzaSyDKx9rdI9wRMb5lv0DXNeWaIAUYzziR6mo"
+export OPENAI_API_KEY="sk-..."
 
 
 Virtual env: python3 -m venv venv

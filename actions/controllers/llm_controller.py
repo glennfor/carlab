@@ -1,3 +1,4 @@
+import time
 from typing import Optional
 
 from actions.controllers.base_controller import BaseController, ControlCommand
@@ -26,7 +27,6 @@ class LLMController(BaseController):
         :param rotation: Angular velocity
         :param duration: How long this command should be active (seconds)
         """
-        import time
         self.current_command = ControlCommand(vx=vx, vy=vy, rotation=rotation)
         self.last_command_time = time.time()
         self.command_timeout = duration
@@ -46,7 +46,6 @@ class LLMController(BaseController):
         if not self.is_active:
             return None
         
-        import time
         if time.time() - self.last_command_time > self.command_timeout:
             self.current_command = ControlCommand()
             return None
