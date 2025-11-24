@@ -1,25 +1,22 @@
 import RPi.GPIO as GPIO
+
 from .motor import Motor
 
 
 class Car:
-    # # MOTOR 1 (M1) - ASSUMED PINS: PWM:12, FWD:20, REV:16
-    # M1_PWM_PIN = 12
-    # M1_IN1_PIN = 20
-    # M1_IN2_PIN = 16
 
-    # MOTOR 1 (M1) - ASSUMED PINS: PWM:12, FWD:20, REV:16
+    # MOTOR 1 (M1) - ASSUMED PINS: PWM:13, FWD:5, REV:6
     M1_PWM_PIN = 13
     M1_INA_PIN = 5
     M1_INB_PIN = 6
 
 
-    # MOTOR 2 (M2) - ASSUMED PINS: PWM:18, FWD:14, 10(REV)->15
+    # MOTOR 2 (M2) - ASSUMED PINS: PWM:18, FWD:24, 10(REV)->23
     M2_PWM_PIN = 18
     M2_INA_PIN = 24
     M2_INB_PIN = 23
 
-    # MOTOR 3 (M3) - ASSUMED PINS: PWM:13, FWD:5, 31(REV)->6
+    # MOTOR 3 (M3) - ASSUMED PINS: PWM:16, FWD:21, REV:20
     M3_PWM_PIN = 16
     M3_INA_PIN = 21
     M3_INB_PIN = 20
@@ -65,25 +62,55 @@ class Car:
     
         # S_i = Vx * cos(theta_i) + Vy * sin(theta_i) + Omega
         
+
+        ### OLD
         # Motor 1: Front Right
-        S1 = 0 * vx + 1 * vy + rotation
+        S_right = 0 * vx + 1 * vy + rotation
         
         # Motor 2: Front Left
-        S2 = 0.866 * vx - 0.5 * vy + rotation 
+        S_left = 0.866 * vx - 0.5 * vy + rotation 
 
         # Motor 3: Rear 
-        S3 = -0.866 * vx + 0.5 * vy + rotation
+        S_rear = -0.866 * vx + 0.5 * vy + rotation
+
+
+        ### FIX C
+
+        # Motor 1: Front Right (0°)
+        S_right = -0 * vx + 1 * vy + rotation
+
+        # Motor 2: Front Left (120°)
+        S_left = -0.866 * vx + (-0.5) * vy + rotation
+
+        # Motor 3: Rear (240°)
+        S_rear = 0.866 * vx + (-0.5) * vy + rotation
+
+
+        ### FIX G
+
+        # Motor 1: Front Right 
+        # Pushes Forward (+Vy) and Left (-Vx)
+        S_right = -0.5 * vx + 0.866 * vy + rotation
+        
+        # Motor 2: Front Left
+        # Pushes Forward (+Vy) and Right (+Vx)
+        S_left = 0.5 * vx + 0.866 * vy + rotation 
+
+        # Motor 3: Rear
+        # Pushes strictly sideways. Usually -Vx.
+        # (If Rear is at the bottom, it handles the X-axis strafing)
+        S_rear = -1.0 * vx + 0 * vy + rotation
         
         # Normalize speeds
-        max_speed_abs = max(abs(S1), abs(S2), abs(S3), 1.0)
+        max_speed_abs = max(abs(S_right), abs(S_left), abs(S_rear), 1.0)
         
-        M1_speed = (S1 / max_speed_abs) * 100 
-        M2_speed = (S2 / max_speed_abs) * 100
-        M3_speed = (S3 / max_speed_abs) * 100
+        M_right_velocity = (S_right / max_speed_abs) * 100 
+        M_left_velocity = (S_left / max_speed_abs) * 100
+        M_rear_velocity = (S_rear / max_speed_abs) * 100
 
-        self.wheels['Right'].set_velocity(M1_speed)
-        self.wheels['Left'].set_velocity(M2_speed)
-        self.wheels['Rear'].set_velocity(M3_speed)
+        self.wheels['Right'].set_velocity(M_right_velocity)
+        self.wheels['Left'].set_velocity(M_left_velocity)
+        self.wheels['Rear'].set_velocity(M_rear_velocity)
     
     def strafe(self, vx):
         '''
