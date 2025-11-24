@@ -7,6 +7,7 @@ to verify inverse kinematics calculations are correct.
 
 import sys
 import time
+from math import cos, sin, pi
 from pathlib import Path
 
 # Add parent directory to path to import car module
@@ -18,7 +19,7 @@ from actions.car import Car
 class MovementTester:
     """Test harness for car movement directions."""
     
-    def __init__(self, default_speed=0.5, default_duration=2.0):
+    def __init__(self, default_speed=1, default_duration=2.0):
         """
         Initialize the movement tester.
         
@@ -40,22 +41,22 @@ class MovementTester:
         :param rotation: Angular velocity (clockwise/counterclockwise)
         """
         # Calculate motor speeds using the same logic as Car.drive()
-        S1 = 0 * vx + 1 * vy + rotation
-        S2 = -0.866 * vx - 0.5 * vy + rotation
-        S3 = 0.866 * vx - 0.5 * vy + rotation
+        S_right = vx * cos(60*pi/180) + vy * sin(60*pi/180) + rotation
+        S_left = vx * cos(180*pi/180 + 120*pi/180) + vy * sin(180*pi/180 + 120*pi/180) + rotation
+        S_rear = vx * cos(180*pi/180) + vy * sin(180*pi/180) + rotation
         
         # Normalize speeds
-        max_speed_abs = max(abs(S1), abs(S2), abs(S3), 1.0)
+        max_speed_abs = max(abs(S_right), abs(S_left), abs(S_rear), 1.0)
         
-        M1_speed = (S1 / max_speed_abs) * 100
-        M2_speed = (S2 / max_speed_abs) * 100
-        M3_speed = (S3 / max_speed_abs) * 100
+        M_right_speed = (S_right / max_speed_abs) * 100
+        M_left_speed = (S_left / max_speed_abs) * 100
+        M_rear_speed = (S_rear / max_speed_abs) * 100
         
         print(f"  Input: vx={vx:.2f}, vy={vy:.2f}, rotation={rotation:.2f}")
         print(f"  Motor speeds:")
-        print(f"    M1 (Front):  {M1_speed:6.2f}%")
-        print(f"    M2 (Left):   {M2_speed:6.2f}%")
-        print(f"    M3 (Right):  {M3_speed:6.2f}%")
+        print(f"    M1 (Right):  {M_right_speed:6.2f}%")
+        print(f"    M2 (Left):   {M_left_speed:6.2f}%")
+        print(f"    M3 (Rear):  {M_rear_speed:6.2f}%")
         print()
     
     def test_movement(self, name, vx, vy, rotation, speed=None, duration=None):

@@ -56,11 +56,15 @@ pip install -q -U google-genai
 
 sudo apt install python3-pyaudio
 
+pigpio
+==========
+  sudo systemctl start pigpiod
 
 Run Tests
 ==============
 python -m actions.controllers.example_usage
 python -m tts.example_online(python tts/example_offline.py)
+python actions/tests/test_movements.py
 
 
 APi Key
@@ -98,3 +102,5 @@ pins: 16, 20, 21
 
 label 1:
 5, 6, 13
+
+fwwd is right

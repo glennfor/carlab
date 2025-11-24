@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-import pigpio
+import RPi.GPIO as GPIO
 
 from enum import Enum
 
@@ -11,15 +11,13 @@ class Direction(Enum):
 
 class Motor:
     PWM_FREQUENCY = 100
-    def __init__(self, pi, pwm_pin, ina_pin, inb_pin):
+    def __init__(self, pwm_pin, ina_pin, inb_pin):
         '''
         Initialize the motor.
-        :param pi: pigpio instance
         :param pwm_pin: the pin number of the PWM pin
         :param ina_pin: the pin number of the ina pin
         :param inb_pin: the pin number of the inb pin
         '''
-        self.pi = pi
         self.pwm_pin = pwm_pin
         self.ina_pin = ina_pin
         self.inb_pin = inb_pin
@@ -31,18 +29,18 @@ class Motor:
         self.init()
 
     def init(self):
-        self.pi.set_mode(self.pwm_pin, pigpio.OUTPUT)
-        self.pi.set_PWM_frequency(self.pwm_pin, self.PWM_FREQUENCY)
-        self.pi.set_PWM_dutycycle(self.pwm_pin, 0)
-        self.pi.set_mode(self.ina_pin, pigpio.OUTPUT)
-        self.pi.set_mode(self.inb_pin, pigpio.OUTPUT)
-        self.pi.write(self.ina_pin, 0)
-        self.pi.write(self.inb_pin, 0)
+        GPIO.setup(self.pwm_pin, GPIO.OUT)
+        self.pwm = GPIO.PWM(self.pwm_pin, self.PWM_FREQUENCY)
+        self.pwm.start(0)
+        GPIO.setup(self.ina_pin, GPIO.OUT)
+        GPIO.setup(self.inb_pin, GPIO.OUT)
+        GPIO.output(self.ina_pin, GPIO.LOW)
+        GPIO.output(self.inb_pin, GPIO.LOW)
 
     def cleanup(self):
-        self.pi.set_PWM_dutycycle(self.pwm_pin, 0)
-        self.pi.write(self.ina_pin, 0)
-        self.pi.write(self.inb_pin, 0)
+        self.pwm.stop()
+        GPIO.cleanup(self.ina_pin)
+        GPIO.cleanup(self.inb_pin)
 
     def set_velocity(self, velocity):
         '''
@@ -74,31 +72,30 @@ class Motor:
         '''
         speed = max(0, min(100, speed))
         self.speed = speed
-        duty_cycle = int(speed * 2.55)
-        self.pi.set_PWM_dutycycle(self.pwm_pin, duty_cycle)
+        self.pwm.ChangeDutyCycle(speed)
     
     def set_direction(self, direction):
         self.direction = direction
         if direction == Direction.FORWARD:
-            self.pi.write(self.ina_pin, 1)
-            self.pi.write(self.inb_pin, 0)
+            GPIO.output(self.ina_pin, GPIO.HIGH)
+            GPIO.output(self.inb_pin, GPIO.LOW)
         elif direction == Direction.BACKWARD:
-            self.pi.write(self.ina_pin, 0)
-            self.pi.write(self.inb_pin, 1)
+            GPIO.output(self.ina_pin, GPIO.LOW)
+            GPIO.output(self.inb_pin, GPIO.HIGH)
         else:
-            self.pi.write(self.ina_pin, 0)
-            self.pi.write(self.inb_pin, 0)
+            GPIO.output(self.ina_pin, GPIO.LOW)
+            GPIO.output(self.inb_pin, GPIO.LOW)
     
     def brake(self):
         self.set_direction(Direction.STOP)
-        self.pi.write(self.ina_pin, 0)
-        self.pi.write(self.inb_pin, 0)
+        GPIO.output(self.ina_pin, GPIO.LOW)
+        GPIO.output(self.inb_pin, GPIO.LOW)
         self.set_speed(0)
     
     def coast(self):
         self.set_direction(Direction.STOP)
-        self.pi.write(self.ina_pin, 1)
-        self.pi.write(self.inb_pin, 1)
+        GPIO.output(self.ina_pin, GPIO.HIGH)
+        GPIO.output(self.inb_pin, GPIO.HIGH)
         self.set_speed(0)
 
     def get_velocity(self):

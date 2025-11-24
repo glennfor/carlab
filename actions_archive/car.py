@@ -1,4 +1,4 @@
-import pigpio
+import RPi.GPIO as GPIO
 
 from .motor import Motor
 
@@ -41,14 +41,11 @@ class Car:
                            Rear(W3)
 
         '''
-        self.pi = pigpio.pi()
-        if not self.pi.connected:
-            raise RuntimeError("Failed to connect to pigpio daemon. Please ensure it's running: 'sudo systemctl start pigpiod'")
-        
+        GPIO.setmode(GPIO.BCM)
         self.wheels = {
-            'Right': Motor(self.pi, self.M1_PWM_PIN, self.M1_INA_PIN, self.M1_INB_PIN), 
-            'Left': Motor(self.pi, self.M2_PWM_PIN, self.M2_INA_PIN, self.M2_INB_PIN), 
-            'Rear': Motor(self.pi, self.M3_PWM_PIN, self.M3_INA_PIN, self.M3_INB_PIN)
+            'Right': Motor(self.M1_PWM_PIN, self.M1_INA_PIN, self.M1_INB_PIN), 
+            'Left': Motor(self.M2_PWM_PIN, self.M2_INA_PIN, self.M2_INB_PIN), 
+            'Rear': Motor(self.M3_PWM_PIN, self.M3_INA_PIN, self.M3_INB_PIN)
             }
         self.init()
 
@@ -181,5 +178,4 @@ class Car:
     def cleanup(self):
         for wheel in self.wheels.values():
             wheel.cleanup()
-        if self.pi.connected:
-            self.pi.stop()
+        GPIO.cleanup()

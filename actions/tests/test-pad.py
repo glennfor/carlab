@@ -4,7 +4,7 @@ import threading
 import time
 from select import select
 
-import RPi.GPIO as GPIO
+import pigpio
 from evdev import InputDevice, KeyEvent, categorize, ecodes, util
 
 # --- 1. CONFIGURATION CONSTANTS ---
@@ -45,10 +45,8 @@ FALLBACK_AXES_INFO = {
 }
 
 # --- 4. GLOBAL STATE AND THREADING ---
-# Global PWM objects for RPi.GPIO
-pwm1 = None
-pwm2 = None
-pwm3 = None
+# Global pigpio instance
+pi = None
 
 dev = None
 # Stores normalized joystick values (-1.0 to 1.0)
@@ -62,40 +60,37 @@ axis_info = {}
 running_event = threading.Event()
 
 
-# --- 5. MOTOR CONTROL FUNCTIONS (Using RPi.GPIO logic) ---
+# --- 5. MOTOR CONTROL FUNCTIONS (Using pigpio logic) ---
 
 def setup_gpio():
-    """Initializes RPi.GPIO settings and sets up PWM objects."""
-    print("Setting up GPIO pins using BCM mode (RPi.GPIO)...")
+    """Initializes pigpio connection and sets up pins."""
+    print("Connecting to pigpio daemon...")
+    global pi
     try:
-        GPIO.setmode(GPIO.BCM)
+        pi = pigpio.pi()
+        
+        if not pi.connected:
+            print("ERROR: Could not connect to pigpio daemon.")
+            print("Please ensure the daemon is running: 'sudo systemctl start pigpiod'")
+            sys.exit(1)
         
         motor_pins = [M1_PWM_PIN, M1_IN1_PIN, M1_IN2_PIN, M2_PWM_PIN, M2_IN1_PIN, M2_IN2_PIN, M3_PWM_PIN, M3_IN1_PIN, M3_IN2_PIN]
         
         for pin in motor_pins:
-            GPIO.setup(pin, GPIO.OUT)
-            GPIO.output(pin, GPIO.LOW) # Ensure all motors are off initially
-            
-        global pwm1, pwm2, pwm3
+            pi.set_mode(pin, pigpio.OUTPUT)
+            pi.write(pin, 0)
         
-        # Initialize PWM instances
-        pwm1 = GPIO.PWM(M1_PWM_PIN, PWM_FREQUENCY)
-        pwm2 = GPIO.PWM(M2_PWM_PIN, PWM_FREQUENCY)
-        pwm3 = GPIO.PWM(M3_PWM_PIN, PWM_FREQUENCY)
+        # Set PWM frequency for all PWM pins
+        pi.set_PWM_frequency(M1_PWM_PIN, PWM_FREQUENCY)
+        pi.set_PWM_frequency(M2_PWM_PIN, PWM_FREQUENCY)
+        pi.set_PWM_frequency(M3_PWM_PIN, PWM_FREQUENCY)
         
         # Start PWM at 0% duty cycle (stopped)
-        pwm1.start(0)
-        pwm2.start(0)
-        pwm3.start(0)
+        pi.set_PWM_dutycycle(M1_PWM_PIN, 0)
+        pi.set_PWM_dutycycle(M2_PWM_PIN, 0)
+        pi.set_PWM_dutycycle(M3_PWM_PIN, 0)
         
         print(f"Setup complete. PWM Frequency set to {PWM_FREQUENCY}Hz.")
-        
-        # WARNING about RPi.GPIO instability
-        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        print("!! WARNING: Using RPi.GPIO (Software PWM). Motor movement may be   !!")
-        print("!! unstable or fail due to high CPU load or system jitter.         !!")
-        print("!! If motors stutter, please switch to the 'pigpio' library.       !!")
-        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
     except Exception as e:
         print(f"Error during GPIO setup: {e}")
@@ -105,56 +100,41 @@ def setup_gpio():
 
 def set_motor_speed(pwm_pin, in1, in2, speed_percent):
     """
-    Sets the speed and direction of a single motor using RPi.GPIO.
+    Sets the speed and direction of a single motor using pigpio.
     :param speed_percent: -100 (full reverse) to 100 (full forward)
     """
-    # Determine the correct PWM object based on the pin
-    global pwm1, pwm2, pwm3
-    if pwm_pin == M1_PWM_PIN:
-        pwm_obj = pwm1
-    elif pwm_pin == M2_PWM_PIN:
-        pwm_obj = pwm2
-    elif pwm_pin == M3_PWM_PIN:
-        pwm_obj = pwm3
-    else:
-        return
-
     speed = max(-100, min(100, speed_percent))
     
-    # Duty cycle is 0-100 directly
-    duty_cycle = min(abs(speed), MAX_DUTY_CYCLE_PERCENT)
+    # Scale 0-100% duty cycle to pigpio's 0-255 range
+    duty_cycle_255 = int(min(abs(speed), MAX_DUTY_CYCLE_PERCENT) * 2.55)
 
     # Set direction pins
     if speed > 0:
         # Forward
-        GPIO.output(in1, GPIO.HIGH)
-        GPIO.output(in2, GPIO.LOW)
+        pi.write(in1, 1)
+        pi.write(in2, 0)
     elif speed < 0:
         # Reverse
-        GPIO.output(in1, GPIO.LOW)
-        GPIO.output(in2, GPIO.HIGH)
+        pi.write(in1, 0)
+        pi.write(in2, 1)
     else:
         # Stop
-        GPIO.output(in1, GPIO.LOW)
-        GPIO.output(in2, GPIO.LOW)
+        pi.write(in1, 0)
+        pi.write(in2, 0)
         
     # Apply speed via PWM duty cycle
-    pwm_obj.ChangeDutyCycle(duty_cycle)
+    pi.set_PWM_dutycycle(pwm_pin, duty_cycle_255)
 
 
 def cleanup():
-    """Stops PWM and cleans up RPi.GPIO."""
-    global pwm1, pwm2, pwm3
-    
-    if pwm1:
-        pwm1.stop()
-    if pwm2:
-        pwm2.stop()
-    if pwm3:
-        pwm3.stop()
-        
-    GPIO.cleanup() 
-    print("RPi.GPIO cleanup complete.")
+    """Stops PWM and disconnects pigpio."""
+    global pi
+    if pi and pi.connected:
+        pi.set_PWM_dutycycle(M1_PWM_PIN, 0)
+        pi.set_PWM_dutycycle(M2_PWM_PIN, 0)
+        pi.set_PWM_dutycycle(M3_PWM_PIN, 0)
+        pi.stop()
+        print("pigpio cleanup complete.")
 
 
 # --- 6. KINEMATICS AND CONTROL LOOP (NO CHANGES) ---
