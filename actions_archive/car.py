@@ -18,11 +18,15 @@ class Car:
     M2_INA_PIN = 17
     M2_INB_PIN = 27
 
-    # MOTOR 3 (M3) - ASSUMED PINS: PWM:16, FWD:21, REV:20
-    M3_PWM_PIN = 16
-    M3_INA_PIN = 21
-    M3_INB_PIN = 20
+    # # MOTOR 3 (M3) - ASSUMED PINS: PWM:16, FWD:21, REV:20
+    # M3_PWM_PIN = 16
+    # M3_INA_PIN = 21
+    # M3_INB_PIN = 20
     
+     # MOTOR 3 (M3) - ASSUMED PINS: PWM:16, FWD:21, REV:20
+    M3_PWM_PIN = 25
+    M3_INA_PIN = 24
+    M3_INB_PIN = 23
 
     def __init__(self):
         '''
@@ -124,8 +128,8 @@ class Car:
 
         ## my try
         # S_i = Vx * cos(theta_i) + Vy * sin(theta_i) + Omega
-        S_right = vx * cos(60*pi/180) + vy * sin(60*pi/180) + rotation   # anle is 60
-        S_left = vx * cos(180*pi/180 + 120*pi/180) + vy * sin(180*pi/180 + 120*pi/180) + rotation # angle 180 + 120
+        S_left = vx * cos(60*pi/180) + vy * sin(60*pi/180) + rotation   # anle is 60
+        S_right = vx * cos(180*pi/180 + 120*pi/180) + vy * sin(180*pi/180 + 120*pi/180) + rotation # angle 180 + 120
         S_rear = vx * cos(180*pi/180) + vy * sin(180*pi/180) + rotation # 180 
         
         # Normalize speeds

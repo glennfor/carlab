@@ -60,10 +60,6 @@ class Motor:
         # set speed
         self.velocity = velocity
         self.set_speed(abs(velocity))
-        print(f"Motor {self.pwm_pin} set to {abs(velocity)}% in direction {direction}")
-
-        
-
 
     def set_speed(self, speed):
         '''

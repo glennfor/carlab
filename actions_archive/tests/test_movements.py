@@ -19,7 +19,7 @@ from actions_archive.car import Car
 class MovementTester:
     """Test harness for car movement directions."""
     
-    def __init__(self, default_speed=1, default_duration=2.0):
+    def __init__(self, default_speed=1, default_duration=.5):
         """
         Initialize the movement tester.
         
