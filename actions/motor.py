@@ -10,7 +10,7 @@ class Direction(Enum):
     BACKWARD = -1
 
 class Motor:
-    PWM_FREQUENCY = 100
+    PWM_FREQUENCY = 1000
     def __init__(self, pi, pwm_pin, ina_pin, inb_pin):
         '''
         Initialize the motor.
@@ -32,15 +32,14 @@ class Motor:
 
     def init(self):
         self.pi.set_mode(self.pwm_pin, pigpio.OUTPUT)
-        self.pi.set_PWM_frequency(self.pwm_pin, self.PWM_FREQUENCY)
-        self.pi.set_PWM_dutycycle(self.pwm_pin, 0)
+        self.pi.hardware_PWM(self.pwm_pin, self.PWM_FREQUENCY, 0)
         self.pi.set_mode(self.ina_pin, pigpio.OUTPUT)
         self.pi.set_mode(self.inb_pin, pigpio.OUTPUT)
         self.pi.write(self.ina_pin, 0)
         self.pi.write(self.inb_pin, 0)
 
     def cleanup(self):
-        self.pi.set_PWM_dutycycle(self.pwm_pin, 0)
+        self.pi.hardware_PWM(self.pwm_pin, self.PWM_FREQUENCY, 0)
         self.pi.write(self.ina_pin, 0)
         self.pi.write(self.inb_pin, 0)
 
@@ -74,8 +73,8 @@ class Motor:
         '''
         speed = max(0, min(100, speed))
         self.speed = speed
-        duty_cycle = int(speed * 2.55)
-        self.pi.set_PWM_dutycycle(self.pwm_pin, duty_cycle)
+        duty_cycle = int(speed * 10000)
+        self.pi.hardware_PWM(self.pwm_pin, self.PWM_FREQUENCY, duty_cycle)
     
     def set_direction(self, direction):
         self.direction = direction
