@@ -1,8 +1,8 @@
 from collections import namedtuple
+from enum import Enum
 
 import pigpio
 
-from enum import Enum
 
 class Direction(Enum):
     STOP = 0
