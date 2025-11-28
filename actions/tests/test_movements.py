@@ -19,7 +19,7 @@ from actions.car import Car
 class MovementTester:
     """Test harness for car movement directions."""
     
-    def __init__(self, default_speed=1, default_duration=2.0):
+    def __init__(self, default_speed=4, default_duration=2.0):
         """
         Initialize the movement tester.
         
@@ -41,10 +41,20 @@ class MovementTester:
         :param rotation: Angular velocity (clockwise/counterclockwise)
         """
         # Calculate motor speeds using the same logic as Car.drive()
-        S_right = vx * cos(60*pi/180) + vy * sin(60*pi/180) + rotation
-        S_left = vx * cos(180*pi/180 + 120*pi/180) + vy * sin(180*pi/180 + 120*pi/180) + rotation
-        S_rear = vx * cos(180*pi/180) + vy * sin(180*pi/180) + rotation
+        # S_left = vx * cos(60*pi/180) + vy * sin(60*pi/180) + rotation   # anle is 60
+        # S_right = vx * cos(180*pi/180 + 120*pi/180) + vy * sin(180*pi/180 + 120*pi/180) + rotation # angle 180 + 120
+        # S_rear = vx * cos(180*pi/180) + vy * sin(180*pi/180) + rotation 
         
+        S_right = -0.5 * vx + 0.866 * vy + rotation
+        
+        # # Motor 2: Front Left
+        # # Pushes Forward (+Vy) and Right (+Vx)
+        S_left = 0.5 * vx + 0.866 * vy + rotation 
+
+        # # Motor 3: Rear
+        # # Pushes strictly sideways. Usually -Vx.
+        # # (If Rear is at the bottom, it handles the X-axis strafing)
+        S_rear = -1.0 * vx + 0 * vy + rotation
         # Normalize speeds
         max_speed_abs = max(abs(S_right), abs(S_left), abs(S_rear), 1.0)
         

@@ -2,43 +2,40 @@ import pigpio
 
 from .motor import Motor
 
+from math import cos, sin, pi
 
 class Car:
 
 
     # Software PWM pins
 
-    # MOTOR 1 (M1) - ASSUMED PINS: PWM:13, FWD:5, REV:6
-    M1_PWM_PIN = 13
-    M1_INA_PIN = 5
-    M1_INB_PIN = 6
+    # # MOTOR 1 (M1) - ASSUMED PINS: PWM:13, FWD:5, REV:6
+    # M1_PWM_PIN = 13
+    # M1_INA_PIN = 5
+    # M1_INB_PIN = 6
 
 
-    # MOTOR 2 (M2) - ASSUMED PINS: PWM:18, FWD:24, 10(REV)->23
-    M2_PWM_PIN = 18
-    M2_INA_PIN = 24
-    M2_INB_PIN = 23
+    # # MOTOR 2 (M2) - ASSUMED PINS: PWM:18, FWD:24, 10(REV)->23
+    # M2_PWM_PIN = 18
+    # M2_INA_PIN = 24
+    # M2_INB_PIN = 23
 
-    # MOTOR 3 (M3) - ASSUMED PINS: PWM:16, FWD:21, REV:20
-    M3_PWM_PIN = 16
-    M3_INA_PIN = 21
-    M3_INB_PIN = 20
+    # # MOTOR 3 (M3) - ASSUMED PINS: PWM:16, FWD:21, REV:20
+    # M3_PWM_PIN = 16
+    # M3_INA_PIN = 21
+    # M3_INB_PIN = 20
     
 
     # Hardware PWM pins
 
-    # MOTOR 1 (M1) - ASSUMED PINS: PWM:13, FWD:5, REV:6
     M1_PWM_PIN = 19
     M1_INA_PIN = 17
     M1_INB_PIN = 27
 
-
-    # MOTOR 2 (M2) - ASSUMED PINS: PWM:18, FWD:24, 10(REV)->23
     M2_PWM_PIN = 13
     M2_INA_PIN = 5
     M2_INB_PIN = 6
 
-    # MOTOR 3 (M3) - ASSUMED PINS: PWM:16, FWD:21, REV:20
     M3_PWM_PIN = 12
     M3_INA_PIN = 23
     M3_INB_PIN = 24
@@ -65,9 +62,9 @@ class Car:
             raise RuntimeError("Failed to connect to pigpio daemon. Please ensure it's running: 'sudo systemctl start pigpiod'")
         
         self.wheels = {
-            'Right': Motor(self.pi, self.M1_PWM_PIN, self.M1_INA_PIN, self.M1_INB_PIN), 
-            'Left': Motor(self.pi, self.M2_PWM_PIN, self.M2_INA_PIN, self.M2_INB_PIN), 
-            'Rear': Motor(self.pi, self.M3_PWM_PIN, self.M3_INA_PIN, self.M3_INB_PIN)
+            'Right': Motor(self.pi, self.M1_PWM_PIN, self.M1_INA_PIN, self.M1_INB_PIN, name='Right Motor'), 
+            'Left': Motor(self.pi, self.M2_PWM_PIN, self.M2_INA_PIN, self.M2_INB_PIN, name='Left Motor'), 
+            'Rear': Motor(self.pi, self.M3_PWM_PIN, self.M3_INA_PIN, self.M3_INB_PIN, name='Rear Motor')
             }
         self.init()
 
@@ -85,52 +82,23 @@ class Car:
         '''
     
         # S_i = Vx * cos(theta_i) + Vy * sin(theta_i) + Omega
-        
-
-        ### OLD
-        # Motor 1: Front Right
-        S_right = 0 * vx + 1 * vy + rotation
-        
-        # Motor 2: Front Left
-        S_left = 0.866 * vx - 0.5 * vy + rotation 
-
-        # Motor 3: Rear 
-        S_rear = -0.866 * vx + 0.5 * vy + rotation
-
-
-        ### FIX C
-
-        # Motor 1: Front Right (0°)
-        # S_right = -0 * vx + 1 * vy + rotation
-
-        # # Motor 2: Front Left (120°)
-        # S_left = -0.866 * vx + (-0.5) * vy + rotation
-
-        # # Motor 3: Rear (240°)
-        # S_rear = 0.866 * vx + (-0.5) * vy + rotation
-
-
-        ### FIX G
 
         # Motor 1: Front Right 
         # Pushes Forward (+Vy) and Left (-Vx)
-        # S_right = -0.5 * vx + 0.866 * vy + rotation
+        S_right = -0.5 * vx + 0.866 * vy + rotation
         
         # # Motor 2: Front Left
         # # Pushes Forward (+Vy) and Right (+Vx)
-        # S_left = 0.5 * vx + 0.866 * vy + rotation 
+        S_left = 0.5 * vx + 0.866 * vy + rotation 
 
         # # Motor 3: Rear
         # # Pushes strictly sideways. Usually -Vx.
         # # (If Rear is at the bottom, it handles the X-axis strafing)
-        # S_rear = -1.0 * vx + 0 * vy + rotation
+        S_rear = -1.0 * vx + 0 * vy + rotation
 
-
-        ### FIX M
-
-        S_right = -vx + rotation
-        S_left  =  0.5*vx + 0.866*vy + rotation
-        S_rear  =  0.5*vx - 0.866*vy + rotation
+        # S_left = vx * cos(60*pi/180) + vy * sin(60*pi/180) + rotation   # anle is 60
+        # S_right = vx * cos(180*pi/180 + 120*pi/180) + vy * sin(180*pi/180 + 120*pi/180) + rotation # angle 180 + 120
+        # S_rear = vx * cos(180*pi/180) + vy * sin(180*pi/180) + rotation 
 
         # Normalize speeds
         max_speed_abs = max(abs(S_right), abs(S_left), abs(S_rear), 1.0)

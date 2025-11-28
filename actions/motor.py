@@ -11,7 +11,7 @@ class Direction(Enum):
 
 class Motor:
     PWM_FREQUENCY = 1000
-    def __init__(self, pi, pwm_pin, ina_pin, inb_pin):
+    def __init__(self, pi, pwm_pin, ina_pin, inb_pin, name = None):
         '''
         Initialize the motor.
         :param pi: pigpio instance
@@ -19,6 +19,7 @@ class Motor:
         :param ina_pin: the pin number of the ina pin
         :param inb_pin: the pin number of the inb pin
         '''
+        self.name = name if name else f"Motor {self.pwm_pin}"
         self.pi = pi
         self.pwm_pin = pwm_pin
         self.ina_pin = ina_pin
@@ -61,7 +62,7 @@ class Motor:
         # set speed
         self.velocity = velocity
         self.set_speed(abs(velocity))
-        print(f"Motor {self.pwm_pin} set to {abs(velocity)}% in direction {direction}")
+        print(f"{self.name} set to {abs(velocity)}% in direction {direction}")
 
         
 
