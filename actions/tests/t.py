@@ -1,58 +1,65 @@
 import time
-
 import pigpio
 
-M1_PWM_PIN = 13
+# --- Motor pin definitions ---
+M1_PWM_PIN = 16
 M1_INA_PIN = 5
 M1_INB_PIN = 6
 
-
-# MOTOR 2 (M2) - ASSUMED PINS: PWM:18, FWD:24, 10(REV)->23
 M2_PWM_PIN = 22
 M2_INA_PIN = 17
 M2_INB_PIN = 27
 
+M3_PWM_PIN = 25
+M3_INA_PIN = 24
+M3_INB_PIN = 23
 
-# MOTOR 3 (M3) - ASSUMED PINS: PWM:12, FWD:20, REV:16
-M3_PWM_PIN = 12
-M3_INA_PIN = 20
-M3_INB_PIN = 16
-
+# --- Setup pigpio ---
 pi = pigpio.pi()
 if not pi.connected:
-    print("Failed to connect to pigpiod")
-    exit(1)
+    print("Could not connect to pigpiod. Did you run 'sudo pigpiod'?")
+    exit()
 
-pi.set_mode(M1_PWM_PIN, pigpio.OUTPUT)
-pi.set_mode(M2_PWM_PIN, pigpio.OUTPUT)
-pi.set_mode(M1_INA_PIN, pigpio.OUTPUT)
-pi.set_mode(M1_INB_PIN, pigpio.OUTPUT)
-pi.set_mode(M2_INA_PIN, pigpio.OUTPUT)
-pi.set_mode(M2_INB_PIN, pigpio.OUTPUT)
-pi.set_mode(M3_PWM_PIN, pigpio.OUTPUT)
-pi.set_mode(M3_INA_PIN, pigpio.OUTPUT)
-pi.set_mode(M3_INB_PIN, pigpio.OUTPUT)
+motors = [
+    {"PWM": M1_PWM_PIN, "INA": M1_INA_PIN, "INB": M1_INB_PIN},
+    {"PWM": M2_PWM_PIN, "INA": M2_INA_PIN, "INB": M2_INB_PIN},
+    {"PWM": M3_PWM_PIN, "INA": M3_INA_PIN, "INB": M3_INB_PIN}
+]
 
-pi.write(M1_INA_PIN, 1)
-pi.write(M1_INB_PIN, 0)
-pi.write(M2_INA_PIN, 1)
-pi.write(M2_INB_PIN, 0)
-pi.write(M3_INA_PIN, 1)
-pi.write(M3_INB_PIN, 0)
+# Initialize pins
+for m in motors:
+    pi.set_mode(m["PWM"], pigpio.OUTPUT)
+    pi.set_mode(m["INA"], pigpio.OUTPUT)
+    pi.set_mode(m["INB"], pigpio.OUTPUT)
+    
+    pi.write(m["INA"], 1)  # Forward direction
+    pi.write(m["INB"], 0)
+    pi.set_PWM_frequency(m["PWM"], 1000) # Set 100Hz
+    pi.set_PWM_dutycycle(m["PWM"], 0)   # Start at 0 (Range is 0-255)
 
-pi.set_PWM_frequency(M1_PWM_PIN, 100)
-pi.set_PWM_frequency(M2_PWM_PIN, 100)
-pi.set_PWM_frequency(M3_PWM_PIN, 100)
+# --- Helper function ---
+def run_motors(motor_indices, duty=230, duration=5): # Duty 230 is approx 90% of 255
+    print(f"Running motors {motor_indices}")
+    for idx in motor_indices:
+        pi.set_PWM_dutycycle(motors[idx]["PWM"], duty)
+    
+    time.sleep(duration)
+    
+    for idx in motor_indices:
+        pi.set_PWM_dutycycle(motors[idx]["PWM"], 0)
 
-print("Starting M1...")
-# pi.set_PWM_dutycycle(M1_PWM_PIN, int(50 * 2.55))
-# time.sleep(2)
+try:
+    # 3. Test all wheels together
+    run_motors([0, 1, 2], duty=230, duration=5)
 
-# print("Starting M2 (M1 should keep running)...")
-pi.set_PWM_dutycycle(M3_PWM_PIN, int(50 * 2.55))
-time.sleep(5)
+except KeyboardInterrupt:
+    pass
 
-print("Stopping...")
-pi.set_PWM_dutycycle(M1_PWM_PIN, 0)
-pi.set_PWM_dutycycle(M3_PWM_PIN, 0)
+# --- Cleanup ---
+for m in motors:
+    pi.set_PWM_dutycycle(m["PWM"], 0)
+    pi.write(m["INA"], 0)
+    pi.write(m["INB"], 0)
+
 pi.stop()
+print("Test complete.")

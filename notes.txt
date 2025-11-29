@@ -62,7 +62,8 @@ sudo pigpiod
 
 Run Tests
 ==============
-python -m actions.controllers.example_usage
+python -m actions.controllers.example_usage / python -m actions_archive.controllers.example_usage
+
 python -m tts.example_online(python tts/example_offline.py)
 python actions/tests/test_movements.py
 

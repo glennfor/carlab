@@ -60,6 +60,81 @@ class Motor:
         # set speed
         self.velocity = velocity
         self.set_speed(abs(velocity))
+    def _speed_to_pwm_duty_cycle_exponential_old(self, speed):
+        """
+        Exponential mapping with deadzone removal for RPi.GPIO.
+
+        speed: 0-100 input
+        Returns duty: 0-100 float
+        """
+        speed = max(0, min(100, speed))
+
+        if speed == 0:
+            return 0
+
+        # CONFIGURATION
+        # MIN_DUTY: The floor (0.0 - 1.0) needed to get the motor actually spinning.
+        # usually 0.20 to 0.35 for standard yellow TT motors.
+        MIN_DUTY = 0.25 
+        
+        # EXPONENT: Curve steepness. 
+        # 1.0 = Linear
+        # 2.0 = Quadratic (smoother low speed)
+        EXPONENT = 2.2
+
+        # Normalize speed to 0-1
+        x = speed / 100.0
+        
+        # Apply curve: y = min + (1-min) * x^exp
+        y = MIN_DUTY + (1 - MIN_DUTY) * (x ** EXPONENT)
+
+        # Scale back to 0-100 for RPi.GPIO
+        return y * 100.0
+
+
+    def _speed_to_pwm_duty_cycle_exponential(self, speed):
+        """
+        Exponential PWM mapping with deadzone compensation.
+        speed: 0–100
+        returns: duty cycle (0–100)
+        """
+        speed = max(0, min(100, speed))
+
+        if speed == 0:
+            return 0
+
+        # minimal duty that actually turns the motor
+        MIN_DUTY = 25 / 100.0    # 25%
+        
+        # how curved the acceleration is
+        EXPONENT = 2.2          # 1.0 = linear, 2.0–3.0 better for small motors
+
+        # normalize to 0–1
+        x = speed / 100.0
+
+        # exponential curve
+        y = MIN_DUTY + (1 - MIN_DUTY) * (x ** EXPONENT)
+
+        return y * 100.0
+
+    
+    # def _speed_to_pwm_duty_cycle_linear(self, speed):
+    #     """
+    #     Linear mapping: speed 0–100% → PWM 0–1,000,000.
+    #     """
+    #     speed = max(0, min(100, speed))
+    #     return int((speed / 100.0) * 1_000_000)
+
+    # def set_speed(self, speed):
+    #     '''
+    #     Set the speed of the motor.
+    #     :param speed: 0 to 100
+    #     '''
+    #     speed = max(0, min(100, speed))
+    #     self.speed = speed
+    #     duty_cycle = self._speed_to_pwm_duty_cycle_exponential(speed)
+    #     print(self.name, duty_cycle)
+    #     self.pi.hardware_PWM(self.pwm_pin, self.PWM_FREQUENCY, duty_cycle)
 
     def set_speed(self, speed):
         '''
@@ -68,7 +143,9 @@ class Motor:
         '''
         speed = max(0, min(100, speed))
         self.speed = speed
-        self.pwm.ChangeDutyCycle(speed)
+        # duty_cycle = speed; #self._speed_to_pwm_duty_cycle_exponential(speed)
+        duty_cycle = self._speed_to_pwm_duty_cycle_exponential(speed)
+        self.pwm.ChangeDutyCycle(duty_cycle)
     
     def set_direction(self, direction):
         self.direction = direction

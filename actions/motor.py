@@ -65,7 +65,37 @@ class Motor:
         print(f"{self.name} set to {abs(velocity)}% in direction {direction}")
 
         
+    def _speed_to_pwm_duty_cycle_exponential(self, speed):
+        """
+        Exponential mapping with deadzone removal.
 
+        speed: 0-100 input
+        min_duty: minimum duty fraction (0.0-1.0) needed for motor to start
+        exponent: curve steepness (>1 = smoother low-speed control)
+
+        Returns duty: 0-1,000,000
+        """
+        speed = max(0, min(100, speed))
+
+        if speed == 0:
+            return 0
+
+        MIN_DUTY = 0.25
+        EXPONENT = 2.2
+
+        MAX_PWM = 1_000_000
+
+        x = speed / 100.0
+        y = MIN_DUTY + (1 - MIN_DUTY) * (x ** EXPONENT)
+
+        return int(y * 1_000_000)
+    
+    def _speed_to_pwm_duty_cycle_linear(self, speed):
+        """
+        Linear mapping: speed 0–100% → PWM 0–1,000,000.
+        """
+        speed = max(0, min(100, speed))
+        return int((speed / 100.0) * 1_000_000)
 
     def set_speed(self, speed):
         '''
@@ -74,7 +104,8 @@ class Motor:
         '''
         speed = max(0, min(100, speed))
         self.speed = speed
-        duty_cycle = int(speed * 10000)
+        duty_cycle = self._speed_to_pwm_duty_cycle_exponential(speed)
+        print(self.name, duty_cycle)
         self.pi.hardware_PWM(self.pwm_pin, self.PWM_FREQUENCY, duty_cycle)
     
     def set_direction(self, direction):

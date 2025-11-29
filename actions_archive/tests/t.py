@@ -1,64 +1,68 @@
 import time
-
 import RPi.GPIO as GPIO
 
-M1_PWM_PIN = 13
+# --- Motor pin definitions ---
+M1_PWM_PIN = 16
 M1_INA_PIN = 5
 M1_INB_PIN = 6
 
-
-# MOTOR 2 (M2) - ASSUMED PINS: PWM:18, FWD:24, 10(REV)->23
-M2_PWM_PIN = 22
+# M2_PWM_PIN = 22
+M2_PWM_PIN = 26
 M2_INA_PIN = 17
 M2_INB_PIN = 27
 
+M3_PWM_PIN = 25
+M3_INA_PIN = 24
+M3_INB_PIN = 23
 
-# MOTOR 3 (M3) - ASSUMED PINS: PWM:12, FWD:20, REV:16
-M3_PWM_PIN = 12
-M3_INA_PIN = 20
-M3_INB_PIN = 16
-
+# --- Setup GPIO ---
 GPIO.setmode(GPIO.BCM)
-GPIO.setwarnings(False)
 
-GPIO.setup(M1_PWM_PIN, GPIO.OUT)
-GPIO.setup(M2_PWM_PIN, GPIO.OUT)
-GPIO.setup(M1_INA_PIN, GPIO.OUT)
-GPIO.setup(M1_INB_PIN, GPIO.OUT)
-GPIO.setup(M2_INA_PIN, GPIO.OUT)
-GPIO.setup(M2_INB_PIN, GPIO.OUT)
-GPIO.setup(M3_PWM_PIN, GPIO.OUT)
-GPIO.setup(M3_INA_PIN, GPIO.OUT)
-GPIO.setup(M3_INB_PIN, GPIO.OUT)
+motors = [
+    {"PWM": M1_PWM_PIN, "INA": M1_INA_PIN, "INB": M1_INB_PIN},
+    {"PWM": M2_PWM_PIN, "INA": M2_INA_PIN, "INB": M2_INB_PIN},
+    {"PWM": M3_PWM_PIN, "INA": M3_INA_PIN, "INB": M3_INB_PIN}
+]
 
-GPIO.output(M1_INA_PIN, GPIO.HIGH)
-GPIO.output(M1_INB_PIN, GPIO.LOW)
-GPIO.output(M2_INA_PIN, GPIO.HIGH)
-GPIO.output(M2_INB_PIN, GPIO.LOW)
-GPIO.output(M3_INA_PIN, GPIO.HIGH)
-GPIO.output(M3_INB_PIN, GPIO.LOW)
+# Initialize pins
+for m in motors:
+    GPIO.setup(m["PWM"], GPIO.OUT)
+    GPIO.setup(m["INA"], GPIO.OUT)
+    GPIO.setup(m["INB"], GPIO.OUT)
+    GPIO.output(m["INA"], GPIO.HIGH)  # Forward direction
+    GPIO.output(m["INB"], GPIO.LOW)
 
-m1_pwm = GPIO.PWM(M1_PWM_PIN, 100)
-m2_pwm = GPIO.PWM(M2_PWM_PIN, 100)
-m3_pwm = GPIO.PWM(M3_PWM_PIN, 100)
+# Initialize PWM at 100 Hz
+for m in motors:
+    m["pwm"] = GPIO.PWM(m["PWM"], 100)
+    m["pwm"].start(0)  # Start with 0% duty cycle
 
-m1_pwm.start(0)
-m2_pwm.start(0)
-m3_pwm.start(0)
+# --- Helper function ---
+def run_motors(motor_indices, duty=90, duration=5):
+    for idx in motor_indices:
+        motors[idx]["pwm"].ChangeDutyCycle(duty)
+    print(f"Running motors {motor_indices} at {duty}% PWM for {duration} s")
+    time.sleep(duration)
+    for idx in motor_indices:
+        motors[idx]["pwm"].ChangeDutyCycle(0)
 
-print("Starting M1...")
-# m1_pwm.ChangeDutyCycle(50)
-# time.sleep(2)
+# --- Test sequence ---
 
-# print("Starting M2 (M1 should keep running)...")
-m3_pwm.ChangeDutyCycle(50)
-time.sleep(5)
+# run_motors([1], duty=90, duration=5)
+# 1. Test wheels individually
+# for i in range(3):
+#     run_motors([i], duty=90, duration=5)
 
-print("Stopping...")
-m1_pwm.ChangeDutyCycle(0)
-m3_pwm.ChangeDutyCycle(0)
-m1_pwm.stop()
-m2_pwm.stop()
-m3_pwm.stop()
+# # 2. Test wheels in pairs
+run_motors([0, 1], duty=40, duration=5)
+run_motors([0, 2], duty=40, duration=5)
+run_motors([1, 2], duty=40, duration=5)
+
+# 3. Test all wheels together
+# run_motors([0, 1, 2], duty=50, duration=5)
+
+# --- Cleanup ---
+for m in motors:
+    m["pwm"].stop()
 GPIO.cleanup()
-
+print("Test complete.")

@@ -41,9 +41,13 @@ class MovementTester:
         :param rotation: Angular velocity (clockwise/counterclockwise)
         """
         # Calculate motor speeds using the same logic as Car.drive()
-        S_right = vx * cos(60*pi/180) + vy * sin(60*pi/180) + rotation
-        S_left = vx * cos(180*pi/180 + 120*pi/180) + vy * sin(180*pi/180 + 120*pi/180) + rotation
-        S_rear = vx * cos(180*pi/180) + vy * sin(180*pi/180) + rotation
+        # S_right = vx * cos(60*pi/180) + vy * sin(60*pi/180) + rotation
+        # S_left = vx * cos(180*pi/180 + 120*pi/180) + vy * sin(180*pi/180 + 120*pi/180) + rotation
+        # S_rear = vx * cos(180*pi/180) + vy * sin(180*pi/180) + rotation
+
+        S_right =  vx + rotation#0
+        S_left  =  -0.5*vx + 0.866*vy + rotation # 2PI/3
+        S_rear  =  -0.5*vx - 0.866*vy + rotation # -^
         
         # Normalize speeds
         max_speed_abs = max(abs(S_right), abs(S_left), abs(S_rear), 1.0)
