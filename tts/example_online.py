@@ -34,7 +34,13 @@ def example_advanced_usage():
     """Example of advanced usage with custom instance."""
     print("Example 6: Advanced Usage with Custom Instance")
     
-    text = 'Robotic systems are quickly becoming more capable and adaptable, entering new domains from transportation to healthcare. To reliably carry out complex tasks in changing environments and around people, these systems rely on increasingly sophisticated artificial intelligence. This course covers the core concepts and techniques underpinning modern robot autonomy, including planning under uncertainty, imitation and reinforcement learning, multiagent interaction, and safety. The lab component introduces the Robot Operating System (ROS) framework and applies the learned theory to hands-on autonomous driving assignments on 1/16-scale robot trucks.'
+    text = '''
+        Robotic systems are quickly becoming more capable and adaptable, entering new domains from transportation to healthcare.
+     To reliably carry out complex tasks in changing environments and around people, these systems rely on increasingly sophisticated 
+     artificial intelligence. This course covers the core concepts and techniques underpinning modern robot autonomy, including planning 
+     under uncertainty, imitation and reinforcement learning, multiagent interaction, and safety. The lab component introduces the Robot 
+     Operating System (ROS) framework and applies the learned theory to hands-on autonomous driving assignments on 1/16-scale robot trucks.
+    '''
     try:
         # Create custom TTS instance
         tts = GoogleTTS(

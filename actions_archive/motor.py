@@ -10,7 +10,7 @@ class Direction(Enum):
     BACKWARD = -1
 
 class Motor:
-    PWM_FREQUENCY = 100
+    PWM_FREQUENCY = 1000
     def __init__(self, pwm_pin, ina_pin, inb_pin):
         '''
         Initialize the motor.
@@ -144,7 +144,7 @@ class Motor:
         speed = max(0, min(100, speed))
         self.speed = speed
         # duty_cycle = speed; #self._speed_to_pwm_duty_cycle_exponential(speed)
-        duty_cycle = self._speed_to_pwm_duty_cycle_exponential(speed)
+        duty_cycle = speed; #self._speed_to_pwm_duty_cycle_exponential(speed)
         self.pwm.ChangeDutyCycle(duty_cycle)
     
     def set_direction(self, direction):
