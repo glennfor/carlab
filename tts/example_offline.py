@@ -84,16 +84,16 @@ if __name__ == "__main__":
     
     try:
         # Run examples
-        example_synchronous()
-        time.sleep(1)
+        # example_synchronous()
+        # time.sleep(1)
         
-        example_asynchronous()
-        time.sleep(1)
+        # example_asynchronous()
+        # time.sleep(1)
         
-        example_multiple_phrases()
+        # example_multiple_phrases()
         
         # Uncomment to run interactive example
-        # example_interactive()
+        example_interactive()
         
         print("=" * 60)
         print("All examples completed!")

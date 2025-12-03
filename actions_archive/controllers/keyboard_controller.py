@@ -3,7 +3,7 @@ import threading
 import time
 from typing import Optional
 
-from actions.controllers.base_controller import BaseController, ControlCommand
+from actions_archive.controllers.base_controller import BaseController, ControlCommand
 
 
 class KeyboardController(BaseController):
