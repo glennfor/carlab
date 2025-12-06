@@ -134,8 +134,16 @@ make -j stream
 
 - Instal cmake: sudo apt install cmake
 
+arecord -D plughw:4 -c1 -r 48000 -f S32_LE -t wav -V mono -v file.wav
+
 
 what i installed and miught remove
+
 ======
 
 pygame
+
+
+
+git config --global user.name "Glen Nfor"
+git config --global user.email "glennfor72@gmail.com"
