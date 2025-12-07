@@ -34,7 +34,7 @@ for m in motors:
 
 # Initialize PWM at 100 Hz
 for m in motors:
-    m["pwm"] = GPIO.PWM(m["PWM"], 100)
+    m["pwm"] = GPIO.PWM(m["PWM"], 1000)
     m["pwm"].start(0)  # Start with 0% duty cycle
 
 # --- Helper function ---
@@ -54,9 +54,9 @@ def run_motors(motor_indices, duty=90, duration=5):
 #     run_motors([i], duty=90, duration=5)
 
 # # 2. Test wheels in pairs
-run_motors([0, 1], duty=40, duration=5)
-run_motors([0, 2], duty=40, duration=5)
-run_motors([1, 2], duty=40, duration=5)
+run_motors([0, 1], duty=40, duration=10)
+# run_motors([0, 2], duty=40, duration=5)
+# run_motors([1, 2], duty=40, duration=5)
 
 # 3. Test all wheels together
 # run_motors([0, 1, 2], duty=50, duration=5)
