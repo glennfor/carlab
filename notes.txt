@@ -153,16 +153,15 @@ git config --global user.email "glennfor72@gmail.com"
 ========= Camera Support =============
 sudo apt update
 sudo apt install -y libcamera-apps
-
-
-sudo apt update
-sudo apt upgrade -y
-sudo apt install python3-pip python3-dev -y
-pip3 install opencv-python
-pip3 install opencv-python-headless  # if you don't need GUI support
-
-pip install opencv-python
-
 python vision/t.py
-python vision/aruco_follower_example.py 
-python -m vision.aruco_follower_example
+
+
+
+--actions/LLM_CONTROL_README.md
+        actions/aruco_follower.py
+        actions/aruco_follower_example.py
+        actions/capabilities.py
+        actions/instruction_executor.py
+        actions/llm_command_interface.py
+        actions/llm_control_example.py
+        actions/llm_planner.py

@@ -5,15 +5,15 @@ This script demonstrates how to use the ArUcoFollower module directly.
 For production use, use the LLM command interface: "follow me" or "follow the person"
 """
 
+import os
 import signal
 import sys
-import os
 import time
 
-from .aruco_follower import ArUcoFollower
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
+# Add src directory to the path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from actions.car import Car
+from vision.aruco_follower import ArUcoFollower
 
 
 def signal_handler(sig, frame, car, follower):
