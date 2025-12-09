@@ -147,3 +147,10 @@ pygame
 
 git config --global user.name "Glen Nfor"
 git config --global user.email "glennfor72@gmail.com"
+
+
+
+========= Camera Support =============
+sudo apt update
+sudo apt install -y libcamera-apps
+python vision/t.py
