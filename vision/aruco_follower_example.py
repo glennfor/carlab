@@ -7,9 +7,12 @@ For production use, use the LLM command interface: "follow me" or "follow the pe
 
 import signal
 import sys
+import os
 import time
 
-from actions.aruco_follower import ArUcoFollower
+from .aruco_follower import ArUcoFollower
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from actions.car import Car
 
 

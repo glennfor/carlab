@@ -1,11 +1,15 @@
+import sys
+import os
 import threading
 import time
 from typing import Optional, Tuple
 
 import cv2
 import numpy as np
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from actions.car import Car
+# from ..actions.car import Car
 
 
 class ArUcoFollower:
