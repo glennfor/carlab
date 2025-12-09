@@ -102,21 +102,13 @@ available_voices = [
     ]
 
 
-label 3:
-pins: 16, 20, 21
-
-label 1:
-5, 6, 13
-
-fwwd is right
-
 
 TTS with piper
 =================
 https://huggingface.co/csukuangfj/vits-piper-en_US-lessac-medium/tree/main
 
 
-ASR with whisper CPP
+STT+ASR with whisper CPP
 =====================
 sudo apt update
 sudo apt install python3-pip portaudio19-dev ffmpeg
@@ -138,23 +130,32 @@ arecord -D plughw:4 -c1 -r 48000 -f S32_LE -t wav -V mono -v file.wav
 
 
 what i installed and miught remove
-
 ======
-
-pygame
-
-
-
 git config --global user.name "Glen Nfor"
 git config --global user.email "glennfor72@gmail.com"
 
 
 
 ========= Camera Support =============
+rpicam-vid
+--
 sudo apt update
 sudo apt install -y libcamera-apps
 python vision/t.py
+python vision/t.py
+python src/vision/aruco_follower_example.py
+python3 -m src.vision.aruco_follower_example
+python3 -m src.vision.t
+python src/vision/t.py
 
+
+
+
+sudo apt update
+sudo apt upgrade -y
+sudo apt install python3-pip python3-dev -y
+pip3 install opencv-python
+pip3 install opencv-python-headless  # if you don't need GUI support
 
 
 --actions/LLM_CONTROL_README.md

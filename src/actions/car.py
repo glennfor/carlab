@@ -44,7 +44,7 @@ class Car:
     # M3_INB_PIN = 24
 
     # --- Motor pin definitions ---
-    M1_PWM_PIN = 16
+    M1_PWM_PIN = 13 #16
     M1_INA_PIN = 5
     M1_INB_PIN = 6
 

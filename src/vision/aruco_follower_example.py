@@ -46,9 +46,10 @@ def main():
     signal.signal(signal.SIGINT, lambda s, f: signal_handler(s, f, car, follower))
     signal.signal(signal.SIGTERM, lambda s, f: signal_handler(s, f, car, follower))
     
+    print('[][] Finished setting up and now starting')
     if not follower.is_available():
         print("Error: Camera not available")
-        car.cleanup()
+        # car.cleanup()
         return
     
     try:
