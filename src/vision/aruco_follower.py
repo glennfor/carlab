@@ -9,9 +9,9 @@ import numpy as np
 
 # Add src directory to the path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from actions.car import Car
+# from actions.car import Car
 
-# from ..actions.car import Car
+from ..actions.car import Car
 
 
 class ArUcoFollower:
@@ -145,7 +145,12 @@ class ArUcoFollower:
     def _follow_loop(self):
         """Main following loop."""
         last_seen_time = time.time()
+
         marker_lost_timeout = 2.0
+
+        # debug
+        last_print_time = time.time()
+        print_interval = 1.0
         
         while self.running and not self.should_stop:
             ret, frame = self.camera.read()
@@ -197,6 +202,11 @@ class ArUcoFollower:
                         vy = np.clip(distance_error * 0.2, -self.max_forward_speed * 0.5, 0)
                 else:
                     vy = 0
+                
+                # debug
+                if time.time() - last_print_time > print_interval:
+                    print(f"Distance: {distance:.2f}m, Error: {error_x:.2f}px, Rotation: {rotation:.2f}rad, Forward: {vy:.2f}m/s")
+                    last_print_time = time.time()
                 
                 # Apply control
                 self.car.drive(0, vy, rotation)
