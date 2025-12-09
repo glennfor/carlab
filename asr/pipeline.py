@@ -4,6 +4,7 @@ import time
 import torch
 import queue
 from whispercpp import Whisper
+import threading
 
 # -----------------------
 #   Load Silero VAD
@@ -86,7 +87,6 @@ class ASR:
     #  Main loop
     # -----------------------
     def run(self):
-        import threading
         threading.Thread(target=self._stream_audio, daemon=True).start()
 
         print("Listening for wake word…")
@@ -137,16 +137,6 @@ class ASR:
         self.audio_interface.terminate()
 
 
-## Usage
-from asr_pipeline import ASR
-
-asr = ASR(
-    wake_word="hey pi",
-    whisper_model="ggml-base.en.bin",
-    device_index=0  # SPH0645 I2S mic
-)
-
-asr.run()
 
 
 ##
