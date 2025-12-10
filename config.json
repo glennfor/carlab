@@ -1,0 +1,297 @@
+{
+  "function_mappings": {
+    "make_step": {
+      "function_name": "make_step",
+      "description": "Move the robot forward or backward by a step",
+      "subsystem": "car_control",
+      "is_terminator": false,
+      "parameters": {
+        "size": {
+          "type": "string",
+          "enum": ["tiny", "small", "large"],
+          "description": "Size of the step"
+        },
+        "direction": {
+          "type": "string",
+          "enum": ["forward", "backward"],
+          "description": "Direction to move"
+        }
+      }
+    },
+    "make_turn": {
+      "function_name": "make_turn",
+      "description": "Turn the robot left or right while moving",
+      "subsystem": "car_control",
+      "is_terminator": false,
+      "parameters": {
+        "direction": {
+          "type": "string",
+          "enum": ["left", "right"],
+          "description": "Direction to turn"
+        },
+        "magnitude": {
+          "type": "string",
+          "enum": ["tiny", "small", "large"],
+          "description": "Magnitude of the turn"
+        }
+      }
+    },
+    "spin_in_place": {
+      "function_name": "spin_in_place",
+      "description": "Spin the robot in place without moving forward/backward",
+      "subsystem": "car_control",
+      "is_terminator": false,
+      "parameters": {
+        "direction": {
+          "type": "string",
+          "enum": ["left", "right"],
+          "description": "Direction to spin"
+        }
+      }
+    },
+    "strafe": {
+      "function_name": "strafe",
+      "description": "Move the robot sideways (left or right) without turning",
+      "subsystem": "car_control",
+      "is_terminator": false,
+      "parameters": {
+        "direction": {
+          "type": "string",
+          "enum": ["left", "right"],
+          "description": "Direction to strafe"
+        },
+        "duration": {
+          "type": "number",
+          "description": "Duration in seconds (default: 0.5)"
+        }
+      }
+    },
+    "drive_forward": {
+      "function_name": "drive_forward",
+      "description": "Drive forward at a specified speed for a duration",
+      "subsystem": "car_control",
+      "is_terminator": false,
+      "parameters": {
+        "speed": {
+          "type": "number",
+          "description": "Speed percentage (0-100, default: 50)"
+        },
+        "duration": {
+          "type": "number",
+          "description": "Duration in seconds (default: 1.0)"
+        }
+      }
+    },
+    "drive_backward": {
+      "function_name": "drive_backward",
+      "description": "Drive backward at a specified speed for a duration",
+      "subsystem": "car_control",
+      "is_terminator": false,
+      "parameters": {
+        "speed": {
+          "type": "number",
+          "description": "Speed percentage (0-100, default: 50)"
+        },
+        "duration": {
+          "type": "number",
+          "description": "Duration in seconds (default: 1.0)"
+        }
+      }
+    },
+    "rotate": {
+      "function_name": "rotate",
+      "description": "Rotate in place at a specified speed for a duration",
+      "subsystem": "car_control",
+      "is_terminator": false,
+      "parameters": {
+        "direction": {
+          "type": "string",
+          "enum": ["left", "right"],
+          "description": "Direction to rotate"
+        },
+        "speed": {
+          "type": "number",
+          "description": "Rotation speed percentage (0-100, default: 50)"
+        },
+        "duration": {
+          "type": "number",
+          "description": "Duration in seconds (default: 1.0)"
+        }
+      }
+    },
+    "stop": {
+      "function_name": "stop",
+      "description": "Stop all movement immediately",
+      "subsystem": "car_control",
+      "is_terminator": true,
+      "parameters": {}
+    },
+    "speak": {
+      "function_name": "speak",
+      "description": "Speak text aloud using text-to-speech",
+      "subsystem": "speech",
+      "is_terminator": false,
+      "parameters": {
+        "text": {
+          "type": "string",
+          "description": "Text to speak"
+        }
+      }
+    },
+    "take_picture": {
+      "function_name": "take_picture",
+      "description": "Capture an image from the camera",
+      "subsystem": "camera",
+      "is_terminator": false,
+      "parameters": {
+        "filename": {
+          "type": "string",
+          "description": "Optional filename for the picture (default: auto-generated)"
+        }
+      }
+    },
+    "start_aruco_following": {
+      "function_name": "start_aruco_following",
+      "description": "Start following a person holding an ArUco marker",
+      "subsystem": "car_control",
+      "is_terminator": false,
+      "parameters": {
+        "marker_id": {
+          "type": "integer",
+          "description": "ArUco marker ID to follow (default: 0)"
+        },
+        "target_distance": {
+          "type": "number",
+          "description": "Target distance in meters (default: 0.15)"
+        }
+      }
+    },
+    "stop_aruco_following": {
+      "function_name": "stop_aruco_following",
+      "description": "Stop ArUco following immediately",
+      "subsystem": "car_control",
+      "is_terminator": true,
+      "parameters": {}
+    },
+    "wait": {
+      "function_name": "wait",
+      "description": "Wait for a specified duration",
+      "subsystem": "none",
+      "is_terminator": false,
+      "parameters": {
+        "duration": {
+          "type": "number",
+          "description": "Duration in seconds"
+        }
+      }
+    },
+    "set_speed": {
+      "function_name": "set_speed",
+      "description": "Set the default speed for movements",
+      "subsystem": "car_control",
+      "is_terminator": false,
+      "parameters": {
+        "speed": {
+          "type": "number",
+          "description": "Speed percentage (0-100)"
+        }
+      }
+    },
+    "move_to_position": {
+      "function_name": "move_to_position",
+      "description": "Move to a specific position using relative coordinates",
+      "subsystem": "car_control",
+      "is_terminator": false,
+      "parameters": {
+        "x": {
+          "type": "number",
+          "description": "Relative X position in meters"
+        },
+        "y": {
+          "type": "number",
+          "description": "Relative Y position in meters"
+        }
+      }
+    },
+    "face_direction": {
+      "function_name": "face_direction",
+      "description": "Rotate to face a specific direction",
+      "subsystem": "car_control",
+      "is_terminator": false,
+      "parameters": {
+        "direction": {
+          "type": "string",
+          "enum": ["north", "south", "east", "west", "left", "right", "forward", "backward"],
+          "description": "Direction to face"
+        }
+      }
+    },
+    "dance": {
+      "function_name": "dance",
+      "description": "Perform a dance sequence",
+      "subsystem": "car_control",
+      "is_terminator": false,
+      "parameters": {
+        "style": {
+          "type": "string",
+          "enum": ["spin", "wiggle", "circle"],
+          "description": "Dance style"
+        }
+      }
+    },
+    "play_sound": {
+      "function_name": "play_sound",
+      "description": "Play a sound effect (if supported)",
+      "subsystem": "speech",
+      "is_terminator": false,
+      "parameters": {
+        "sound": {
+          "type": "string",
+          "description": "Sound name or file path"
+        }
+      }
+    },
+    "get_status": {
+      "function_name": "get_status",
+      "description": "Get the current status of the robot",
+      "subsystem": "none",
+      "is_terminator": false,
+      "parameters": {}
+    },
+    "calibrate": {
+      "function_name": "calibrate",
+      "description": "Calibrate the robot's sensors or motors",
+      "subsystem": "car_control",
+      "is_terminator": false,
+      "parameters": {
+        "component": {
+          "type": "string",
+          "enum": ["motors", "camera", "sensors"],
+          "description": "Component to calibrate"
+        }
+      }
+    }
+  },
+  "subsystems": {
+    "car_control": {
+      "queue_name": "car_control_queue",
+      "lock_name": "car_control_lock",
+      "description": "Controls all car movement functions"
+    },
+    "camera": {
+      "queue_name": "camera_queue",
+      "lock_name": "camera_lock",
+      "description": "Controls camera operations"
+    },
+    "speech": {
+      "queue_name": "speech_queue",
+      "lock_name": "speech_lock",
+      "description": "Controls speech output"
+    },
+    "none": {
+      "queue_name": "general_queue",
+      "lock_name": "general_lock",
+      "description": "General operations that don't conflict"
+    }
+  }
+}

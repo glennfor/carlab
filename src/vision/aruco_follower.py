@@ -140,9 +140,8 @@ class ArUcoFollower:
     # Start/Stop
     # -------------------------------------------------------
 
-    def start(self):
-        if self.running:
-            return
+    def run(self):
+        self.running = True
 
         try:
             self.picam2 = Picamera2()
@@ -153,9 +152,8 @@ class ArUcoFollower:
             )
             self.picam2.start()
 
-            self.running = True
-            self.follow_thread = threading.Thread(target=self._follow_loop, daemon=True)
-            self.follow_thread.start()
+            # Start the follow loop 
+            self._follow_loop()
 
         except Exception as e:
             print(f"Failed to start ArUco follower: {e}")
@@ -164,18 +162,11 @@ class ArUcoFollower:
             self.picam2 = None
             self.running = False
 
-        print('[1] Starting Eye')
-
     def stop(self):
         self.running = False
-
-        if self.follow_thread and self.follow_thread.is_alive():
-            self.follow_thread.join(timeout=2.0)
-
         if self.picam2:
             self.picam2.close()
             self.picam2 = None
-
         self.car.drive(0, 0, 0)
 
     # -------------------------------------------------------
@@ -183,7 +174,6 @@ class ArUcoFollower:
     # -------------------------------------------------------
 
     def _follow_loop(self):
-        print('[2] Starting following loop')
         last_seen = time.time()
         lost_timeout = 2.0
         last_update_time = time.time()
@@ -222,8 +212,9 @@ class ArUcoFollower:
 
                 # Debug print sometimes
                 if random.random() > 0.9:
-                    print(f"tz={tz:.2f}m  tx={tx:.2f}m  vy={vy:.2f}  rot={rotation:.2f}  "
-                          f"dist_err={distance_error:.3f}  angle_err={angle_error:.3f}")
+                    pass
+                    # print(f"tz={tz:.2f}m  tx={tx:.2f}m  vy={vy:.2f}  rot={rotation:.2f}  "
+                    #       f"dist_err={distance_error:.3f}  angle_err={angle_error:.3f}")
 
                 # Drive robot
                 self.car.drive(0, vy, rotation)

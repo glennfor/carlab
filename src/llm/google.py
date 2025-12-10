@@ -2,12 +2,10 @@
 
 import os
 import time
+from typing import Any, Callable, List
 
 from google import genai
 from google.genai import types
-
-from typing import Any, Callable, List
-
 
 
 class GoogleLLM:
@@ -37,6 +35,11 @@ class GoogleLLM:
             automatic_function_calling=types.AutomaticFunctionCallingConfig(
                 disable=True
             ),
+            system_instruction=[
+                types.Part(text="You are the brain of a pet robot."),
+                types.Part(text="Always be creative in your responses."),
+                types.Part(text="You are able to call functions to perform actions."),
+            ]
             # # Force the model to call 'any' function, instead of chatting.
             # tool_config=types.ToolConfig(
             #     function_calling_config=types.FunctionCallingConfig(mode='ANY')
@@ -46,7 +49,7 @@ class GoogleLLM:
         self.chat = self.client.chats.create(model=model, config=config)
         
     
-    def ask(self, text):
+    def respond(self, text):
         response = self.chat.send_message(text)
         function_calls = response.function_calls
         speech = response.text
@@ -77,7 +80,7 @@ if __name__ == "__main__":
     llm = GoogleLLM(functions = [weather_function])
     print('Asking')
     then = time.time()
-    speech, function_calls = llm.ask("Are you an LLM? if you call any functions, make sure to let me know. always give me a text response")
+    speech, function_calls = llm.respond("Are you an LLM? if you call any functions, make sure to let me know. always give me a text response")
 
     print(speech)
     print(function_calls)

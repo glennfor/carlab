@@ -1,12 +1,13 @@
 import asyncio
 import os
+import queue
 import threading
 
+import numpy as np
 import pyaudio
 from elevenlabs import ElevenLabs
-
-import numpy as np
 from scipy.signal import resample
+
 
 def resample_audio(chunk: bytes, orig_sr: int, target_sr: int) -> bytes:
     """Resample PCM16 audio chunk from orig_sr to target_sr."""
@@ -38,14 +39,9 @@ class Vocalizer:
         self.client = ElevenLabs(api_key=self.api_key)
         self.audio = pyaudio.PyAudio()
         self.stream = None
-        
-        # List available output devices
-        p = self.audio
-        for i in range(p.get_device_count()):
-            info = p.get_device_info_by_index(i)
-            
-            if info['maxOutputChannels'] > 0:
-                print(f"Output Device {i}: {info['name']} ({info['maxOutputChannels']} channels)")
+        self.queue = queue.Queue()
+        self.running = False
+     
 
     def _setup_audio_stream(self):
         """Setup PyAudio output stream."""
@@ -114,9 +110,36 @@ class Vocalizer:
         thread = threading.Thread(target=_speak_thread, daemon=True)
         thread.start()
         return thread
+    
+    def run(self):
+        """Run the vocalizer."""
+        """Thread: Process audio queue."""
+        while self.running:
+            try:
+                text = self.queue.get(timeout=1)
+                if text is None:
+                    continue
+                self.speak(text)
+            except queue.Empty:
+                time.sleep(0.1)
+                continue
+            except Exception as e:
+                print(f"Error in vocalizer: {e}")
+                break
+    
+    
+    def queue(self, text):
+        """Add text to the vocalizer queue."""
+        self.queue.put(text)
+    
+    def stop(self):
+        """Stop the vocalizer."""
+        self.running = False
+        
 
     def close(self):
         """Close audio stream and cleanup."""
+        self.running = False
         self._close_audio_stream()
         if self.audio:
             self.audio.terminate()

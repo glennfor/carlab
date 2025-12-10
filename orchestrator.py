@@ -15,13 +15,15 @@ class Orchestrator:
         self.vocalizer = Vocalizer()
         self.google_llm = GoogleLLM()
         self.xbee_communicator = XBeeCommunicator()
+        self.executor = Executor(car=self.car, follower=self.aruco_follower, vocalizer=self.vocalizer, llm=self.google_llm)
 
     def start(self):
+        self.executor.start()
         self.aruco_follower.start()
-        self.transcriber.start()
         self.vocalizer.start()
         self.google_llm.start()
         self.xbee_communicator.start()
+        self.transcriber.start()
 
     def stop(self):
         self.aruco_follower.stop()

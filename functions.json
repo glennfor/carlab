@@ -1,0 +1,16 @@
+[
+  {
+    "name": "take_picture",
+    "description": "Take a picture with the camera and save it to a file at the imgs folder.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "filename": {
+          "type": "string",
+          "description": "The filename to save the picture to"
+        }
+      },
+      "required": ["filename"]
+    }
+  }
+]
