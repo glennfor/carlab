@@ -56,12 +56,41 @@ class GoogleLLM:
     
     def respond(self, text):
         print('Called LLM with: ', text)
-        response = self.chat.send_message(text)
-        function_calls = response.function_calls
-        speech = response.text
-        print('Got----: ', speech)
-        print('Got----: ', function_calls)
-        return speech, function_calls
+        try:
+            print('Sending message to LLM...')
+            start_time = time.time()
+            response = self.chat.send_message(text)
+            elapsed = time.time() - start_time
+            print(f'LLM response received after {elapsed:.2f} seconds')
+            
+            # Debug: print response object type and attributes
+            print(f'Response type: {type(response)}')
+            print(f'Response dir: {[attr for attr in dir(response) if not attr.startswith("_")]}')
+            
+            # Safely access response attributes
+            function_calls = getattr(response, 'function_calls', None)
+            speech = getattr(response, 'text', None)
+            
+            # If text is not directly available, try to extract from candidates
+            if speech is None:
+                if hasattr(response, 'candidates') and response.candidates:
+                    candidate = response.candidates[0]
+                    if hasattr(candidate, 'content') and hasattr(candidate.content, 'parts'):
+                        text_parts = []
+                        for part in candidate.content.parts:
+                            if hasattr(part, 'text'):
+                                text_parts.append(part.text)
+                        speech = ' '.join(text_parts) if text_parts else None
+            
+            print('Got---- speech: ', speech)
+            print('Got---- function_calls: ', function_calls)
+            
+            return speech or "", function_calls or []
+        except Exception as e:
+            print(f'ERROR in LLM respond: {type(e).__name__}: {e}')
+            import traceback
+            traceback.print_exc()
+            return "", []
     
 
 if __name__ == "__main__":
