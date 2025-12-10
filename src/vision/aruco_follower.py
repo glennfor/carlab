@@ -1,9 +1,9 @@
 import os
+import random
 import sys
 import threading
 import time
 from typing import Optional, Tuple
-import random
 
 from picamera2 import Picamera2
 import cv2

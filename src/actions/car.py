@@ -3,8 +3,6 @@ import RPi.GPIO as GPIO
 from .motor import Motor
 
 
-from math import cos, sin, pi
-
 class Car:
 
     # # MOTOR 1 (M1) - ASSUMED PINS: PWM:13, FWD:5, REV:6

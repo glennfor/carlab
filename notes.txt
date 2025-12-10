@@ -69,7 +69,6 @@ python -m actions.controllers.example_usage / python -m actions_archive.controll
 
 python -m src.tts.example_online(python tts/example_offline.py)
 
-
 python src/actions/tests/test_movements.py
 
 python -m src.actions.controllers.example_usage
