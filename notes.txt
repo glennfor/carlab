@@ -182,7 +182,8 @@ sudo apt-get install libportaudio2 libportaudiocpp0 portaudio19-dev \
 
 pip install elevenlabs
 pip install "elevenlabs[pyaudio]"
-
+pydub
+pip install scipy
 
 
 ========= Camera Support =============
