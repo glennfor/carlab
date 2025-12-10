@@ -5,12 +5,60 @@ import threading
 import time
 from typing import Optional, Tuple
 
-from picamera2 import Picamera2
 import cv2
 import numpy as np
+from picamera2 import Picamera2
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from actions.car import Car
+
+
+class PIDController:
+    """Simple PID controller for distance and angle control."""
+    
+    def __init__(self, kp: float, ki: float, kd: float, max_output: float = float('inf')):
+        self.kp = kp
+        self.ki = ki
+        self.kd = kd
+        self.max_output = max_output
+        
+        self.integral = 0.0
+        self.last_error = 0.0
+        self.last_time = None
+    
+    def update(self, error: float, dt: float) -> float:
+        """Update PID controller and return output."""
+        if self.last_time is None:
+            self.last_time = time.time()
+            self.last_error = error
+            return 0.0
+        
+        # Proportional term
+        p_term = self.kp * error
+        
+        # Integral term
+        self.integral += error * dt
+        i_term = self.ki * self.integral
+        
+        # Derivative term
+        d_term = self.kd * (error - self.last_error) / dt if dt > 0 else 0.0
+        
+        # Compute output
+        output = p_term + i_term + d_term
+        
+        # Clamp output
+        output = np.clip(output, -self.max_output, self.max_output)
+        
+        # Update state
+        self.last_error = error
+        
+        return output
+    
+    def reset(self):
+        """Reset PID controller state."""
+        self.integral = 0.0
+        self.last_error = 0.0
+        self.last_time = None
 
 
 class ArUcoFollower:
@@ -27,6 +75,14 @@ class ArUcoFollower:
         target_distance: float = 0.15,
         max_forward_speed: float = 0.4,
         max_rotation_speed: float = 0.5,
+        # PID gains for distance control
+        distance_kp: float = 0.8,
+        distance_ki: float = 0.1,
+        distance_kd: float = 0.05,
+        # PID gains for angle control
+        angle_kp: float = 1.0,
+        angle_ki: float = 0.05,
+        angle_kd: float = 0.1,
     ):
         self.car = car
         self.marker_id = marker_id
@@ -34,6 +90,20 @@ class ArUcoFollower:
         self.target_distance = target_distance
         self.max_forward_speed = max_forward_speed
         self.max_rotation_speed = max_rotation_speed
+
+        # Initialize PID controllers
+        self.distance_pid = PIDController(
+            kp=distance_kp,
+            ki=distance_ki,
+            kd=distance_kd,
+            max_output=max_forward_speed
+        )
+        self.angle_pid = PIDController(
+            kp=angle_kp,
+            ki=angle_ki,
+            kd=angle_kd,
+            max_output=max_rotation_speed
+        )
 
         self.picam2: Optional[Picamera2] = None
         self.running = False
@@ -118,8 +188,13 @@ class ArUcoFollower:
         print('[2] Starting following loop')
         last_seen = time.time()
         lost_timeout = 2.0
+        last_update_time = time.time()
 
         while self.running and not self.should_stop:
+            current_time = time.time()
+            dt = current_time - last_update_time
+            last_update_time = current_time
+
             frame = self.picam2.capture_array()
             if frame is None:
                 print("Camera returned NULL frame.")
@@ -135,31 +210,32 @@ class ArUcoFollower:
                 # --- Ensure valid forward distance ---
                 if tz < self.target_distance:
                     self.car.drive(0, 0, 0)
+                    self.distance_pid.reset()
+                    self.angle_pid.reset()
                     continue
 
-                # ---- Forward speed using real 3D tz ----
+                # ---- Forward speed using PID control on distance ----
                 distance_error = tz - self.target_distance
-                vy = np.clip(distance_error * 0.8, 
-                             -self.max_forward_speed, 
-                             self.max_forward_speed)
+                vy = self.distance_pid.update(distance_error, dt)
 
-                # ---- Rotation using lateral offset ----
+                # ---- Rotation using PID control on angle ----
                 angle_error = np.arctan2(tx, tz)
-                rotation = np.clip(angle_error * 1.0,
-                                   -self.max_rotation_speed,
-                                   self.max_rotation_speed)
+                rotation = self.angle_pid.update(angle_error, dt)
 
                 # Debug print sometimes
                 if random.random() > 0.9:
-                    print(f"tz={tz:.2f}m  tx={tx:.2f}m  vy={vy:.2f}  rot={rotation:.2f}")
+                    print(f"tz={tz:.2f}m  tx={tx:.2f}m  vy={vy:.2f}  rot={rotation:.2f}  "
+                          f"dist_err={distance_error:.3f}  angle_err={angle_error:.3f}")
 
                 # Drive robot
                 self.car.drive(0, vy, rotation)
 
             else:
-                # If lost for a while, stop safely
+                # If lost for a while, stop safely and reset PID controllers
                 if time.time() - last_seen > lost_timeout:
                     self.car.drive(0, 0, 0)
+                    self.distance_pid.reset()
+                    self.angle_pid.reset()
                 time.sleep(0.1)
 
             time.sleep(0.03)

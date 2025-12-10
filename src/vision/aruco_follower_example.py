@@ -40,6 +40,14 @@ def main():
         car=car,
         marker_id=0,
         target_distance=0.15,
+        # distance control
+        distance_kp=0.8,
+        distance_ki=0.05,
+        distance_kd=0.02,
+        # angle control
+        angle_kp=0.08,
+        angle_ki=0.05,
+        angle_kd=0.02,
     )
     
     signal.signal(signal.SIGINT, lambda s, f: signal_handler(s, f, car, follower))
