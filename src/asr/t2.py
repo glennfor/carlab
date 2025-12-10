@@ -1,15 +1,15 @@
 import asyncio
-import json
-import websockets
-import pyaudio
-import base64  # For encoding audio
-import threading
 import queue
+import threading
+
+import pyaudio
+from elevenlabs import ElevenLabs, RealtimeEvents
+
 
 class ElevenLabsASR:
     def __init__(self, 
                 api_key, 
-                model_id="eleven_turbo_v2_5", 
+                model_id="scribe_v2_realtime", 
                 wake_word="hey pi", 
                 device_index=0,
                 sample_rate=16000, 
@@ -20,26 +20,20 @@ class ElevenLabsASR:
         self.listening_for_wakeword = True
         self.sample_rate = sample_rate
         self.chunk = chunk
+        self.device_index = device_index
         self.audio = pyaudio.PyAudio()
         self.stream = self.audio.open(
             format=pyaudio.paInt16,
             channels=1,
             rate=sample_rate,
             input=True,
-            frames_per_buffer=chunk
+            frames_per_buffer=chunk,
+            input_device_index=device_index
         )
         self.audio_queue = queue.Queue()
-        self.command_callback = None  # Set this to a function that handles the transcribed command
-        self.ws_url = (
-            f"wss://api.elevenlabs.io/v1/speech-to-text/realtime?"
-            f"model_id={self.model_id}&"
-            f"xi-api-key={self.api_key}&"
-            f"commit_strategy=vad&"
-            f"vad_silence_threshold_secs=1.0&"  # Adjust as needed
-            f"vad_threshold=0.5&"
-            f"min_speech_duration_ms=250&"
-            f"language_code=en"  # Set to your language
-        )
+        self.command_callback = None
+        self.client = ElevenLabs(api_key=api_key)
+        self.connection = None
         print("ElevenLabs ASR ready.")
 
     def set_command_callback(self, callback):
@@ -49,80 +43,99 @@ class ElevenLabsASR:
     def _stream_audio(self):
         """Thread: Read mic audio and put in queue."""
         while True:
-            data = self.stream.read(self.chunk, exception_on_overflow=False)
-            self.audio_queue.put(data)
-
-    async def _receive_transcripts(self, ws):
-        """Handle incoming messages from WebSocket."""
-        while True:
             try:
-                message = await ws.recv()
-                evt = json.loads(message)
-                evt_type = evt.get("type")
-                
-                if evt_type == "sessionStarted":
-                    print("Session started:", evt)
-                
-                elif evt_type == "partialTranscript":
-                    text = evt.get("transcript", "").strip().lower()
-                    if text and self.listening_for_wakeword:
-                        if self.wake_word in text:
-                            print("🚀 Wake word detected!")
-                            self.listening_for_wakeword = False
-                            print("Now listening for command...")
-                
-                elif evt_type == "committedTranscript":
-                    text = evt.get("transcript", "").strip()
-                    if text and not self.listening_for_wakeword:
-                        print(f"🎤 Command: {text}")
-                        if self.command_callback:
-                            self.command_callback(text)  # Send to LLM pipeline
-                        else:
-                            print(f"Transcribed command (send to LLM): {text}")
-                        self.listening_for_wakeword = True
-                        print("Listening for wake word...")
-                
-                elif "Error" in evt_type:
-                    print(f"Error: {evt}")
-            
+                data = self.stream.read(self.chunk, exception_on_overflow=False)
+                self.audio_queue.put(data)
             except Exception as e:
-                print(f"Receive error: {e}")
+                print(f"Audio stream error: {e}")
                 break
 
+    def _on_partial_transcript(self, event):
+        """Handle partial transcript events for wake word detection."""
+        if isinstance(event, dict):
+            text = event.get("text", event.get("transcript", "")).strip().lower()
+        else:
+            text = str(event).strip().lower()
+        
+        if text and self.listening_for_wakeword:
+            if self.wake_word in text:
+                print("🚀 Wake word detected!")
+                self.listening_for_wakeword = False
+                print("Now listening for command...")
+
+    def _on_committed_transcript(self, event):
+        """Handle committed transcript events for command processing."""
+        if isinstance(event, dict):
+            text = event.get("text", event.get("transcript", "")).strip()
+        else:
+            text = str(event).strip()
+        
+        if text and not self.listening_for_wakeword:
+            print(f"🎤 Command: {text}")
+            if self.command_callback:
+                self.command_callback(text)
+            else:
+                print(f"Transcribed command (send to LLM): {text}")
+            self.listening_for_wakeword = True
+            print("Listening for wake word...")
+
+    def _on_error(self, error):
+        """Handle error events."""
+        print(f"Error: {error}")
+
+    def _on_close(self):
+        """Handle connection close events."""
+        print("Connection closed")
+
     async def run_async(self):
-        """Async main loop for WebSocket connection and audio sending."""
-        async with websockets.connect(self.ws_url) as ws:
-            # Start receive task
-            receive_task = asyncio.create_task(self._receive_transcripts(ws))
-            # await ws.send(json.dumps({
-            #     "type": "session.start",
-            #     "sample_rate": self.sample_rate,
-            #     "channels": 1,
-            #     "format": "pcm_16"
-            # }))
+        """Async main loop for SDK connection and audio sending."""
+        try:
+            self.connection = await self.client.speech_to_text.realtime.connect(
+                model_id=self.model_id,
+                language_code="en",
+                sample_rate=self.sample_rate,
+                audio_format="pcm_16000",
+                vad_silence_threshold_secs=1.0,
+                vad_threshold=0.5,
+                min_speech_duration_ms=250,
+                commit_strategy="vad"
+            )
+
+            self.connection.on(RealtimeEvents.PARTIAL_TRANSCRIPT, self._on_partial_transcript)
+            self.connection.on(RealtimeEvents.COMMITTED_TRANSCRIPT, self._on_committed_transcript)
+            self.connection.on(RealtimeEvents.ERROR, self._on_error)
+            self.connection.on(RealtimeEvents.CLOSE, self._on_close)
+
+            print("Connected to ElevenLabs STT...")
 
             while True:
                 try:
                     data = self.audio_queue.get(timeout=1)
                     if not data:
                         continue
-                    # Encode audio to base64 (docs imply binary, but JSON needs encoding; base64 is safe)
-                    # Convert raw PCM → base64 string
-                    b64_audio = base64.b64encode(data).decode("utf-8")
-
-                    # Send inside JSON envelope (required by ElevenLabs)
-                    await ws.send(json.dumps({
-                        "type": "input_audio_buffer.append",
-                        "audio": b64_audio
-                    }))
-                    # await ws.send(data)
+                    # Send audio data to the connection
+                    # The SDK connection object should have a send method for audio bytes
+                    await self.connection.send(data)
                 except queue.Empty:
                     continue
+                except AttributeError:
+                    # If send doesn't work, try alternative method names
+                    if hasattr(self.connection, 'send_audio'):
+                        await self.connection.send_audio(data)
+                    elif hasattr(self.connection, 'append_audio'):
+                        await self.connection.append_audio(data)
+                    else:
+                        print("Error: No audio sending method found on connection")
+                        break
                 except Exception as e:
                     print(f"Send error: {e}")
                     break
-            
-            await receive_task
+
+        except Exception as e:
+            print(f"Connection error: {e}")
+        finally:
+            if self.connection:
+                await self.connection.close()
 
     def run(self):
         """Start threads and async loop."""
@@ -131,9 +144,12 @@ class ElevenLabsASR:
         asyncio.run(self.run_async())
 
     def close(self):
-        self.stream.stop_stream()
-        self.stream.close()
-        self.audio.terminate()
+        """Close audio stream and cleanup."""
+        if self.stream:
+            self.stream.stop_stream()
+            self.stream.close()
+        if self.audio:
+            self.audio.terminate()
 
 # Usage example
 def example_llm_callback(command):
