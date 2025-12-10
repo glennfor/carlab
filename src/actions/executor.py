@@ -53,9 +53,23 @@ class Instruction:
 class FunctionMapper:
     """Maps function names from planner to actual function implementations."""
     
-    def __init__(self, config: List[Dict]):
-        self.config = config
+    def __init__(self, config_path: str = "config.json"):
+        self.config_path = config_path
+        self.config = self._load_config()
         self.function_map: Dict[str, Callable] = {}
+    
+    def _load_config(self) -> Dict[str, Any]:
+        """Load function mappings from config.json."""
+        config_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+            self.config_path
+        )
+        try:
+            with open(config_path, 'r') as f:
+                return json.load(f)
+        except FileNotFoundError:
+            print(f"Warning: {config_path} not found. Using defaults.")
+            return {"function_mappings": {}, "subsystems": {}}
     
     def get_function_info(self, function_name: str) -> Optional[Dict[str, Any]]:
         """Get function information from config."""
@@ -83,6 +97,13 @@ class FunctionMapper:
         """Get a registered function."""
         return self.function_map.get(name)
 
+    def get_functions_mappings(self,) -> Optional[Callable]:
+        """Get a function mappins dict."""
+        function_mappings = self.config.get('function_mappings').values()
+        for mapping in function_mappins:
+            del mapping["is_terminator"]
+        return function_mappings
+
 
 class Executor:
     """
@@ -90,12 +111,12 @@ class Executor:
     Supports terminator functions that execute immediately.
     """
     
-    def __init__(self, car: Car, follower:ArUcoFollower, vocalizer:Vocalizer, llm:GoogleLLM, config: List[Dict]):
+    def __init__(self, car: Car, follower:ArUcoFollower, vocalizer:Vocalizer):
         self.car = car
         self.follower = follower
         self.vocalizer = vocalizer
-        self.llm = llm
-        self.mapper = FunctionMapper(config)
+        self.mapper = FunctionMapper()
+        self.llm = GoogleLLM(functions=self.mapper.get_functions_mappings())
 
         # command queue - this is the queue of commands that are received from the user and will
         # be processed by the llm and executed by the robot
