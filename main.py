@@ -1,10 +1,13 @@
-from src.actions import Car
-from src.vision import ArUcoFollower
-from src.tts import LocalVocalizer:
-from src.llm import GoogleLLM
-from src.com import XBeeCommunicator
+import time
 
+from orchestrator import Orchestrator
 
 # error indicator? send if problem
 if __name__ == '__main__':
-    pass
+    orchestrator = Orchestrator()
+    orchestrator.start()
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        orchestrator.stop()

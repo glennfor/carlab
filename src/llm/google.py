@@ -1,20 +1,19 @@
 
+import base64
+import io
+import os
 import subprocess
 import tempfile
-import os
-import base64
-import base64
-import os
 import threading
-import io
 import wave
+
 import pyaudio
 from google import genai
 from google.genai import types
 
 
 class GoogleLLM:
-    def __init__(self, api_key=None, model="gemini-2.5-flash-preview-tts", voice_name="Kore"):
+    def __init__(self, api_key=None, model="gemini-2.5-flash", functions:list[Function] = []):
         """
         Initialize Google GenAI TTS client.
         
@@ -29,37 +28,38 @@ class GoogleLLM:
                 "API key required. Set GEMINI_API_KEY environment variable "
                 "or pass api_key parameter."
             )
-        
+
         self.client = genai.Client(api_key=self.api_key)
-        self.model = model
+
+        house_tools = [
+            types.Tool(function_declarations=functions) 
+        ]
+        config = types.GenerateContentConfig(
+            tools=house_tools,
+            automatic_function_calling=types.AutomaticFunctionCallingConfig(
+                disable=True
+            ),
+            # Force the model to call 'any' function, instead of chatting.
+            tool_config=types.ToolConfig(
+                function_calling_config=types.FunctionCallingConfig(mode='ANY')
+            ),
+        )
+
+        self.chat = self.client.chat(model=model, config=config)
         
     
     def ask(self, text):
-        """
-        Synthesize speech from text using Gemini TTS API.
-        
-        Args:
-            text: Text to convert to speech
-            
-        Returns:
-            bytes: Raw PCM audio data
-        """
-        response = self.client.models.generate_content(
-            model=self.model,
-            contents=text,
-            config=types.GenerateContentConfig(
-                response_modalities=["AUDIO"],
-                speech_config=types.SpeechConfig(
-                    voice_config=types.VoiceConfig(
-                        prebuilt_voice_config=types.PrebuiltVoiceConfig(
-                            voice_name=self.voice_name,
-                        )
-                    )
-                ),
-            )
-        )
-        
-        # extract functions to call
-        # and text to speal here ; should match teh expcted output
+        response = self.chat.send_message(text)
+        function_calls = response.function_calls
+        speech = response.text
+        return speech, function_calls
     
-   
+
+if __name__ == "__main__":
+    def get_weather(city: str) -> str:
+        return f"The weather in {city} is sunny."
+    
+    llm = GoogleLLM()
+    speech, function_calls = llm.ask("What is the weather in Tokyo?")
+    print(speech)
+    print(function_calls)

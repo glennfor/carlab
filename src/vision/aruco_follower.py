@@ -1,5 +1,6 @@
 import os
 import random
+import signal
 import sys
 import threading
 import time
@@ -107,7 +108,6 @@ class ArUcoFollower:
 
         self.picam2: Optional[Picamera2] = None
         self.running = False
-        self.should_stop = False
         self.follow_thread: Optional[threading.Thread] = None
 
         # ArUco detector
@@ -154,7 +154,6 @@ class ArUcoFollower:
             self.picam2.start()
 
             self.running = True
-            self.should_stop = False
             self.follow_thread = threading.Thread(target=self._follow_loop, daemon=True)
             self.follow_thread.start()
 
@@ -168,7 +167,6 @@ class ArUcoFollower:
         print('[1] Starting Eye')
 
     def stop(self):
-        self.should_stop = True
         self.running = False
 
         if self.follow_thread and self.follow_thread.is_alive():
@@ -190,7 +188,7 @@ class ArUcoFollower:
         lost_timeout = 2.0
         last_update_time = time.time()
 
-        while self.running and not self.should_stop:
+        while self.running:
             current_time = time.time()
             dt = current_time - last_update_time
             last_update_time = current_time
@@ -284,3 +282,51 @@ class ArUcoFollower:
             return True
         except:
             return False
+
+
+
+def signal_handler(sig, frame, car, follower):
+    """Handle shutdown signals."""
+    print("\nShutting down...")
+    if follower:
+        follower.stop()
+    car.drive(0, 0, 0)
+    car.cleanup()
+    sys.exit(0)
+
+if __name__ == "__main__":
+    
+    """Test ArUco following."""
+    print("ArUco Follower Test")
+    print("=" * 50)
+    print("Make sure you have an ArUco marker (ID 0, DICT_4X4_50)")
+    print("Hold it in front of the camera to start following")
+    print("Press Ctrl+C to stop")
+    print("=" * 50)
+    
+    car = Car()
+    follower = ArUcoFollower(
+        car=car,
+        marker_id=0,
+        target_distance=0.15,
+        # distance control
+        distance_kp=0.8,
+        distance_ki=0.05,
+        distance_kd=0.02,
+        # angle control
+        angle_kp=0.08,
+        angle_ki=0.05,
+        angle_kd=0.02,
+    )
+    signal.signal(signal.SIGINT, lambda s, f: signal_handler(s, f, car, follower))
+    signal.signal(signal.SIGTERM, lambda s, f: signal_handler(s, f, car, follower))
+    try:
+        follower.start()
+        while follower.running:
+            time.sleep(0.1)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        follower.stop()
+        car.cleanup()
+        sys.exit(0)
