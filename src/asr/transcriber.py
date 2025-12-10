@@ -50,6 +50,7 @@ class Transcriber:
                 "or pass api_key parameter."
             )
 
+        print('key=',self.api_key[:6])
         self.model_id = model_id
         self.sample_rate = sample_rate
         self.chunk = chunk
@@ -74,7 +75,7 @@ class Transcriber:
         # self.audio_queue = asyncio.Queue()
 
         self.command_callback = None
-        self.client = ElevenLabs(api_key=api_key)
+        self.client = ElevenLabs(api_key=self.api_key)
         self.connection = None
 
     def set_command_callback(self, callback):
@@ -113,6 +114,10 @@ class Transcriber:
         
         if text:
             print(f"🎤 Command: {text}")
+            isCommand = 'string' in text or 'String' in text
+            if not isCommand:
+                return
+            
             if self.command_callback:
                 self.command_callback(text)
             else:
@@ -129,6 +134,9 @@ class Transcriber:
         print("Connection closed")
 
     async def run_async(self):
+        print('-----'*50)
+        print('Checking')
+        print('-----'*50)
         """Async main loop for SDK connection and audio sending."""
         try:
             self.connection = await self.client.speech_to_text.realtime.connect(RealtimeAudioOptions(
@@ -188,6 +196,13 @@ class Transcriber:
         asyncio.run(self.run_async())
 
     def close(self):
+        """Close audio stream and cleanup."""
+        if self.stream:
+            self.stream.stop_stream()
+            self.stream.close()
+        if self.audio:
+            self.audio.terminate()
+    def stop(self):
         """Close audio stream and cleanup."""
         if self.stream:
             self.stream.stop_stream()

@@ -55,9 +55,12 @@ class GoogleLLM:
         
     
     def respond(self, text):
+        print('Called LLM with: ', text)
         response = self.chat.send_message(text)
         function_calls = response.function_calls
         speech = response.text
+        print('Got----: ', speech)
+        print('Got----: ', function_calls)
         return speech, function_calls
     
 

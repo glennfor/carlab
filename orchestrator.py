@@ -24,13 +24,12 @@ class Orchestrator:
         self.vocalizer.run()
         # self.google_llm.start()
         # self.xbee_communicator.start()
-        self.transcriber.run()
         self.transcriber.set_command_callback(self.executor.add_command)
-    
+        self.transcriber.run()
 
     def stop(self):
         self.aruco_follower.stop()
         self.transcriber.stop()
         self.vocalizer.stop()
-        self.google_llm.stop()
-        self.xbee_communicator.stop()
+        # self.google_llm.stop()
+        # self.xbee_communicator.stop()

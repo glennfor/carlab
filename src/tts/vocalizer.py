@@ -112,22 +112,42 @@ class Vocalizer:
         thread.start()
         return thread
     
-    def run(self):
-        """Run the vocalizer."""
-        """Thread: Process audio queue."""
+    # def run(self):
+    #     """Run the vocalizer."""
+    #     """Thread: Process audio queue."""
+    #     while self.running:
+    #         try:
+    #             text = self.queue.get(timeout=1)
+    #             if text is None:
+    #                 continue
+    #             self.speak(text)
+    #         except queue.Empty:
+    #             time.sleep(0.1)
+    #             continue
+    #         except Exception as e:
+    #             print(f"Error in vocalizer: {e}")
+    #             break
+    
+    def _run_loop(self):
+        """Private method: processes the queue in a loop."""
         while self.running:
             try:
-                text = self.queue.get(timeout=1)
+                text = self._queue.get(timeout=1)
                 if text is None:
                     continue
                 self.speak(text)
             except queue.Empty:
-                time.sleep(0.1)
                 continue
             except Exception as e:
-                print(f"Error in vocalizer: {e}")
-                break
-    
+                print(f"Error in vocalizer loop: {e}")
+
+    def run(self):
+        """Start the vocalizer queue loop in a background thread."""
+        if self.running:
+            return  # Already running
+        self.running = True
+        self._thread = threading.Thread(target=self._run_loop, daemon=True)
+        self._thread.start()
     
     def queue(self, text):
         """Add text to the vocalizer queue."""

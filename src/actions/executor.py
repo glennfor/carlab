@@ -315,8 +315,11 @@ class Executor:
         while self.is_running:
             try:
                 command = self.command_queue.get(timeout=0.1)
+                if command:
+                    print('Got the Command:', command)
                 speech, function_calls = self.llm.respond(command)
                 self.add_instructions(function_calls)
+                print('Got LLMMMMM::::::', speech)
                 # might need to remove this
                 if speech:
                     self.vocalizer.queue(speech)
@@ -331,7 +334,7 @@ class Executor:
         while self.is_running:
             try:
                 instruction = self.receiving_queue.get(timeout=0.1)
-                
+                print('Got instruction' * 5)
                 # Check if it's a terminator - execute immediately
                 if instruction.is_terminator:
                     self._execute_terminator(instruction)
