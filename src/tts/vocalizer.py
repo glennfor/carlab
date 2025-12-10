@@ -2,6 +2,7 @@ import asyncio
 import os
 import queue
 import threading
+import time
 
 import numpy as np
 import pyaudio
@@ -40,7 +41,7 @@ class Vocalizer:
         self.audio = pyaudio.PyAudio()
         self.stream = None
         self.queue = queue.Queue()
-        self.running = False
+        self.running = True
      
 
     def _setup_audio_stream(self):

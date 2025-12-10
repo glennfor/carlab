@@ -38,12 +38,18 @@ def downsample_48k_to_16k(data_bytes):
 
 class Transcriber:
     def __init__(self, 
-                api_key, 
+                api_key = None, 
                 model_id="scribe_v2_realtime", 
                 device_index=0,
                 sample_rate=48000, 
                 chunk=1024):
-        self.api_key = api_key
+        self.api_key = api_key or os.getenv("ELEVENLABS_API_KEY")
+        if not self.api_key:
+            raise ValueError(
+                "API key required. Set ELEVENLABS_API_KEY environment variable "
+                "or pass api_key parameter."
+            )
+
         self.model_id = model_id
         self.sample_rate = sample_rate
         self.chunk = chunk

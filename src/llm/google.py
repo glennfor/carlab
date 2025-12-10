@@ -9,7 +9,7 @@ from google.genai import types
 
 
 class GoogleLLM:
-    def __init__(self, api_key=None, model="gemini-2.5-flash", functions:List[Callable[..., Any]] = []):
+    def __init__(self, api_key=None, model="gemini-2.5-flash", functions:List[Any] = []):
         """
         Initialize Google GenAI TTS client.
         
@@ -40,13 +40,18 @@ class GoogleLLM:
                 types.Part(text="Always be creative in your responses."),
                 types.Part(text="You are able to call functions to perform actions."),
             ]
+            # generation_config=types.GenerationConfig(
+            #     temperature=0.8,
+            #     top_p=0.9,
+            #     top_k=40,
+            # )
             # # Force the model to call 'any' function, instead of chatting.
             # tool_config=types.ToolConfig(
             #     function_calling_config=types.FunctionCallingConfig(mode='ANY')
             # ),
         )
 
-        self.chat = self.client.chats.create(model=model, config=config)
+        self.chat = self.client.chats.create(model=model, config=config,)
         
     
     def respond(self, text):
@@ -80,7 +85,7 @@ if __name__ == "__main__":
     llm = GoogleLLM(functions = [weather_function])
     print('Asking')
     then = time.time()
-    speech, function_calls = llm.respond("Are you an LLM? if you call any functions, make sure to let me know. always give me a text response")
+    speech, function_calls = llm.respond("Hey pi")
 
     print(speech)
     print(function_calls)
