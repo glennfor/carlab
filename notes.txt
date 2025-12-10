@@ -207,3 +207,11 @@ sudo apt install python3-pip python3-dev -y
 pip3 install opencv-python
 pip3 install opencv-python-headless  # if you don't need GUI support
 
+
+ print('Called LLM with: ', text)
+        response = self.chat.send_message(text)
+        function_calls = response.function_calls
+        speech = response.text
+        print('Got----: ', speech)
+        print('Got----: ', function_calls)
+        return speech, function_calls
