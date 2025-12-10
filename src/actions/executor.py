@@ -8,9 +8,9 @@ from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
 from actions.car import Car
-from vision.aruco_follower import ArUcoFollower
 from llm.google import GoogleLLM
 from tts.vocalizer import Vocalizer
+from vision.aruco_follower import ArUcoFollower
 
 
 class StepSize(Enum):
@@ -97,12 +97,19 @@ class FunctionMapper:
         """Get a registered function."""
         return self.function_map.get(name)
 
-    def get_functions_mappings(self,) -> Optional[Callable]:
-        """Get a function mappins dict."""
-        function_mappings = self.config.get('function_mappings').values()
-        for mapping in function_mappins:
-            del mapping["is_terminator"]
-        return function_mappings
+    def get_functions_mappings(self) -> List[Dict[str, Any]]:
+        """Get function mappings for LLM (without is_terminator and subsystem fields)."""
+        function_mappings = list(self.config.get('function_mappings', {}).values())
+        # Create copies without is_terminator and subsystem fields for LLM
+        llm_functions = []
+        for mapping in function_mappings:
+            llm_func = {
+                "name": mapping.get("name"),
+                "description": mapping.get("description"),
+                "parameters": mapping.get("parameters", {})
+            }
+            llm_functions.append(llm_func)
+        return llm_functions
 
 
 class Executor:
@@ -229,12 +236,26 @@ class Executor:
         self.receiving_queue.put(instruction)
         return instruction
     
-    def add_instructions(self, instructions: List[Dict[str, Any]], speech: Optional[str] = None):
-        """Add multiple instructions to the receiving queue."""
+    def add_instructions(self, instructions: List[Any], speech: Optional[str] = None):
+        """Add multiple instructions to the receiving queue.
+        
+        Handles both Google LLM FunctionCall objects and dict format.
+        """
         for inst in instructions:
-            function_name = inst.get("function_name")
-            params = inst.get("parameters", {})
-            self.add_instruction(function_name, params, speech)
+            # Handle Google LLM FunctionCall objects
+            if hasattr(inst, 'name') and hasattr(inst, 'args'):
+                function_name = inst.name
+                params = inst.args if inst.args else {}
+            # Handle dict format
+            elif isinstance(inst, dict):
+                function_name = inst.get("function_name") or inst.get("name")
+                params = inst.get("parameters", {}) or inst.get("args", {})
+            else:
+                print(f"Warning: Unknown instruction format: {type(inst)}")
+                continue
+            
+            if function_name:
+                self.add_instruction(function_name, params, speech)
     
     def start(self):
         """Start the execution threads."""
