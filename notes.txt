@@ -165,11 +165,25 @@ pip install whispercpp
 pip install openai-whisper
 --
 pip install torchaudio --index-url https://download.pytorch.org/whl/torch_stable.html
+::::::::
 
 ==
 sudo apt update
 sudo apt install -y libssl-dev libcurl4-openssl-dev build-essential
 pip install --no-binary :all: whisper-cpp-python
+
+
+===
+Switching over to using eleven labs for STT and maybe TTS
+sudo apt-get update
+sudo apt-get install libportaudio2 libportaudiocpp0 portaudio19-dev \
+                     libasound-dev libsndfile1-dev -y
+
+
+pip install elevenlabs
+pip install "elevenlabs[pyaudio]"
+
+
 
 ========= Camera Support =============
 rpicam-vid

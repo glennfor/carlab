@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 case "$1" in
-    train)
-        python -m project.training.train_model
+    init)
+        source venv/bin/activate
         ;;
     serve)
         python -m project.api.server
