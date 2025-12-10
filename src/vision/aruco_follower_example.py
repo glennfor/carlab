@@ -39,8 +39,7 @@ def main():
     follower = ArUcoFollower(
         car=car,
         marker_id=0,
-        target_distance=0.8,
-        min_distance=0.3
+        target_distance=0.15,
     )
     
     signal.signal(signal.SIGINT, lambda s, f: signal_handler(s, f, car, follower))

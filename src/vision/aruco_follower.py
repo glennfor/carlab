@@ -24,17 +24,13 @@ class ArUcoFollower:
         car: Car,
         marker_id: int = 0,
         marker_size: float = 0.05,  # meters
-        min_distance: float = 0.15,
-        max_distance: float = 2.0,
-        target_distance: float = 0.8,
+        target_distance: float = 0.15,
         max_forward_speed: float = 0.4,
         max_rotation_speed: float = 0.5,
     ):
         self.car = car
         self.marker_id = marker_id
         self.marker_size = marker_size
-        self.min_distance = min_distance
-        self.max_distance = max_distance
         self.target_distance = target_distance
         self.max_forward_speed = max_forward_speed
         self.max_rotation_speed = max_rotation_speed
@@ -137,7 +133,7 @@ class ArUcoFollower:
                 tx, ty, tz = tvec.flatten()
 
                 # --- Ensure valid forward distance ---
-                if tz < self.min_distance:
+                if tz < self.target_distance:
                     self.car.drive(0, 0, 0)
                     continue
 
@@ -149,12 +145,12 @@ class ArUcoFollower:
 
                 # ---- Rotation using lateral offset ----
                 angle_error = np.arctan2(tx, tz)
-                rotation = np.clip(angle_error * 2.0,
+                rotation = np.clip(angle_error * 1.0,
                                    -self.max_rotation_speed,
                                    self.max_rotation_speed)
 
                 # Debug print sometimes
-                if random.random() > 0.92:
+                if random.random() > 0.9:
                     print(f"tz={tz:.2f}m  tx={tx:.2f}m  vy={vy:.2f}  rot={rotation:.2f}")
 
                 # Drive robot
