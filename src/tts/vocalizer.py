@@ -1,8 +1,10 @@
 import asyncio
 import os
+from io import BytesIO
 
 import pyaudio
 from elevenlabs import ElevenLabs
+from pydub import AudioSegment
 
 
 class Vocalizer:
@@ -12,7 +14,7 @@ class Vocalizer:
                  model_id="eleven_multilingual_v2",
                  device_index=None,
                  sample_rate=44100,
-                 output_format="pcm_44100"):
+                 output_format=None):
         self.api_key = api_key or os.getenv("ELEVENLABS_API_KEY")
         if not self.api_key:
             raise ValueError("Missing ELEVENLABS_API_KEY. Provide it as parameter or set as environment variable.")
@@ -21,11 +23,14 @@ class Vocalizer:
         self.model_id = model_id
         self.device_index = device_index
         self.sample_rate = sample_rate
+        # Use None or "mp3_44100_128" for free tier (PCM requires Pro tier)
         self.output_format = output_format
         
         self.client = ElevenLabs(api_key=self.api_key)
         self.audio = pyaudio.PyAudio()
         self.stream = None
+        self.current_stream_rate = None
+        self.current_stream_channels = None
         
         # List available output devices
         p = self.audio
@@ -34,15 +39,20 @@ class Vocalizer:
             if info['maxOutputChannels'] > 0:
                 print(f"Output Device {i}: {info['name']} ({info['maxOutputChannels']} channels)")
 
-    def _setup_audio_stream(self):
+    def _setup_audio_stream(self, rate=None, channels=1):
         """Setup PyAudio output stream."""
-        if self.stream:
+        rate = rate or self.sample_rate
+        
+        # Reuse stream if rate and channels match
+        if self.stream and self.current_stream_rate == rate and self.current_stream_channels == channels:
             return
+        
+        self._close_audio_stream()
         
         stream_kwargs = {
             "format": pyaudio.paInt16,
-            "channels": 1,
-            "rate": self.sample_rate,
+            "channels": channels,
+            "rate": rate,
             "output": True,
         }
         
@@ -50,6 +60,8 @@ class Vocalizer:
             stream_kwargs["output_device_index"] = self.device_index
         
         self.stream = self.audio.open(**stream_kwargs)
+        self.current_stream_rate = rate
+        self.current_stream_channels = channels
 
     def _close_audio_stream(self):
         """Close PyAudio output stream."""
@@ -57,27 +69,51 @@ class Vocalizer:
             self.stream.stop_stream()
             self.stream.close()
             self.stream = None
+            self.current_stream_rate = None
+            self.current_stream_channels = None
 
     def speak(self, text):
         """Convert text to speech and play it directly."""
         if not text or not text.strip():
             return
         
-        self._setup_audio_stream()
-        
         try:
-            # Stream audio from ElevenLabs
-            audio_stream = self.client.text_to_speech.stream(
-                text=text,
-                voice_id=self.voice_id,
-                model_id=self.model_id,
-                output_format=self.output_format
-            )
+            # Stream audio from ElevenLabs (defaults to MP3 for free tier)
+            stream_kwargs = {
+                "text": text,
+                "voice_id": self.voice_id,
+                "model_id": self.model_id,
+            }
             
-            # Play audio chunks as they arrive
+            # Only add output_format if specified (None means default MP3)
+            if self.output_format:
+                stream_kwargs["output_format"] = self.output_format
+            
+            audio_stream = self.client.text_to_speech.stream(**stream_kwargs)
+            
+            # Collect all MP3 chunks
+            mp3_data = BytesIO()
             for chunk in audio_stream:
                 if isinstance(chunk, bytes):
-                    self.stream.write(chunk)
+                    mp3_data.write(chunk)
+            
+            # Reset to beginning for reading
+            mp3_data.seek(0)
+            
+            # Decode MP3 to PCM
+            audio_segment = AudioSegment.from_file(mp3_data, format="mp3")
+            
+            # Convert to raw PCM data
+            raw_audio = audio_segment.raw_data
+            
+            # Setup audio stream with the actual sample rate and channels from decoded audio
+            self._setup_audio_stream(rate=audio_segment.frame_rate, channels=audio_segment.channels)
+            
+            # Play the decoded PCM audio
+            chunk_size = 1024
+            for i in range(0, len(raw_audio), chunk_size):
+                chunk = raw_audio[i:i + chunk_size]
+                self.stream.write(chunk)
             
             # Flush any remaining buffer
             self.stream.write(b"")
@@ -85,9 +121,6 @@ class Vocalizer:
         except Exception as e:
             print(f"Error during speech synthesis: {e}")
             raise
-        finally:
-            # Keep stream open for potential reuse
-            pass
 
     def speak_async(self, text):
         """Convert text to speech asynchronously (non-blocking)."""
