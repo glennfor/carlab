@@ -1,2 +1,2 @@
-class LocalVocalizer:
+class Vocalizer:
     pass
