@@ -229,3 +229,15 @@ class ArUcoFollower:
             return True
         except:
             return False
+
+
+
+# If you use a printed marker, OpenCV can compute exact distance from:
+
+# marker corner locations
+
+# camera calibration matrix
+
+# OpenCV literally gives you a 3D pose:
+
+# rvec, tvec = cv2.aruco.estimatePoseSingleMarkers(...)

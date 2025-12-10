@@ -3,8 +3,8 @@ from pipeline import ASR
 
 asr = ASR(
     wake_word="hey pi",
-    whisper_model="ggml-base.en.bin",
-    device_index=0  # SPH0645 I2S mic
+    whisper_model="base.en",
+    device_index=1  
 )
 
 if __name__ == '__main__':

@@ -1,3 +1,6 @@
+git config --global user.name "Glen Nfor"
+git config --global user.email "glennfor72@gmail.com"
+
 Libraries: Ensure evdev and pigpio are installed:
 
 Bash
@@ -64,13 +67,13 @@ Run Tests
 ==============
 python -m actions.controllers.example_usage / python -m actions_archive.controllers.example_usage
 
-python -m tts.example_online(python tts/example_offline.py)
+python -m src.tts.example_online(python tts/example_offline.py)
 
 
 python actions/tests/test_movements.py
 
 python -m actions_archive.controllers.example_usage
-python actions/tests/test_movements.py
+python src/actions/tests/test_movements.py
 
 APi Key
 ======
@@ -78,7 +81,7 @@ export GEMINI_API_KEY="AIzaSyDKx9rdI9wRMb5lv0DXNeWaIAUYzziR6mo"
 export OPENAI_API_KEY="sk-..."
 
 
-Virtual env: python3 -m venv venv
+Virtual env: python3 -m venv venv, python3 -m venv --system-site-packages venv
 ==========
 source venv/bin/activate
 deactivate
@@ -129,12 +132,45 @@ make -j stream
 arecord -D plughw:4 -c1 -r 48000 -f S32_LE -t wav -V mono -v file.wav
 
 
+python -m src.asr.t
+python src/asr/t.py
+python src/asr/t2.py
+
+
+
 what i installed and miught remove
 ======
-git config --global user.name "Glen Nfor"
-git config --global user.email "glennfor72@gmail.com"
+pyaudio
 
+sudo apt update
+sudo apt install python3-dev portaudio19-dev
+pip3 install pyaudio
 
+--
+pip3 install google-genai
+--
+sudo apt update
+sudo apt install -y python3-pip python3-dev libopenblas-dev libblas-dev libatlas-base-dev
+---
+pip3 install --upgrade pip
+pip3 install torch --extra-index-url https://download.pytorch.org/whl/cpu
+---
+pip install git+https://github.com/absadiki/pywhispercpp
+---
+pip install sounddevice
+---
+pip install webrtcvad
+--
+pip install whispercpp
+--
+pip install openai-whisper
+--
+pip install torchaudio --index-url https://download.pytorch.org/whl/torch_stable.html
+
+==
+sudo apt update
+sudo apt install -y libssl-dev libcurl4-openssl-dev build-essential
+pip install --no-binary :all: whisper-cpp-python
 
 ========= Camera Support =============
 rpicam-vid
@@ -157,12 +193,3 @@ sudo apt install python3-pip python3-dev -y
 pip3 install opencv-python
 pip3 install opencv-python-headless  # if you don't need GUI support
 
-
---actions/LLM_CONTROL_README.md
-        actions/aruco_follower.py
-        actions/aruco_follower_example.py
-        actions/capabilities.py
-        actions/instruction_executor.py
-        actions/llm_command_interface.py
-        actions/llm_control_example.py
-        actions/llm_planner.py

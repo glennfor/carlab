@@ -3,18 +3,23 @@ import pyaudio
 import time
 import torch
 import queue
-from whispercpp import Whisper
 import threading
-# import soundfile as sf
-import webrtcvad
-
+from pywhispercpp import Whisper
 
 # -----------------------
-#   Load  VAD
+#   Load Silero VAD
 # -----------------------
-vad = webrtcvad.Vad(2)  # aggressiveness 0-3
+vad_model, vad_utils = torch.hub.load(repo_or_dir='snakers4/silero-vad',
+                                      model='silero_vad',
+                                      force_reload=False)
+(get_speech_timestamps,
+ save_audio,
+ read_audio,
+ VADIterator,
+ collect_chunks) = vad_utils
 
-class ASR:
+
+class Trancriber:
     def __init__(self,
                  wake_word="hey pi",
                  whisper_model="ggml-base.en.bin",
@@ -27,31 +32,15 @@ class ASR:
         self.chunk = chunk
         self.device_index = device_index
         self.audio_interface = pyaudio.PyAudio()
-        p = self.audio_interface
-
-        for i in range(p.get_device_count()):
-            info = p.get_device_info_by_index(i)
-            if info['maxInputChannels'] > 0:
-                print(f"Index {i}: {info['name']} ({info['maxInputChannels']} channels)")
-
-        # self.stream = self.audio_interface.open(
-        #     format=pyaudio.paInt16,
-        #     channels=1,
-        #     rate=sample_rate,
-        #     input=True,
-        #     frames_per_buffer=chunk,
-        #     input_device_index=device_index
-        # )
 
         self.stream = self.audio_interface.open(
-            format=pyaudio.paInt32,    # 32-bit PCM
-            channels=1,                # mono
-            rate=48000,                # 48 kHz
+            format=pyaudio.paInt16,
+            channels=1,
+            rate=sample_rate,
             input=True,
             frames_per_buffer=chunk,
             input_device_index=device_index
         )
-
 
         # Buffers
         self.audio_queue = queue.Queue()
@@ -59,9 +48,9 @@ class ASR:
         self.listening_for_wakeword = True
         self.wake_word = wake_word.lower()
 
-        # Whisper model
-        print("Loading Whisper.cpp model…")
-        self.whisper = Whisper.from_pretrained(whisper_model)
+        # Whisper model (pywhispercpp)
+        print("Loading pywhispercpp model…")
+        self.whisper = Whisper(whisper_model)
 
         print("ASR system ready.")
 
@@ -77,28 +66,22 @@ class ASR:
     # -----------------------
     #  Check if audio contains speech (VAD)
     # -----------------------
-    # def _is_speech(self, audio_chunk):
-    #     # audio_tensor = torch.from_numpy(audio_chunk).float()
-    #     # prob = vad_model(audio_tensor, self.sample_rate).item()
-    #     # return prob > 0.5
-    #         # Ensure float32, mono
-    #     audio_tensor = torch.tensor(audio_chunk, dtype=torch.float32)
-        
-    #     # Silero VAD expects shape [samples], no torchaudio needed
-    #     speech_timestamps = get_speech_timestamps(audio_tensor, vad_model, sampling_rate=self.sample_rate)
-        
-    #     return len(speech_timestamps) > 0
-    
     def _is_speech(self, audio_chunk):
-        # Convert float32 [-1,1] to int16
-        pcm16 = (audio_chunk * 32767).astype('int16').tobytes()
-        return vad.is_speech(pcm16, sample_rate=self.sample_rate)
+        audio_tensor = torch.from_numpy(audio_chunk).float()
+        prob = vad_model(audio_tensor, self.sample_rate).item()
+        return prob > 0.5
 
     # -----------------------
-    #  Whisper streaming decode
+    #  Whisper streaming decode (pywhispercpp)
     # -----------------------
     def _whisper_transcribe(self, audio_data):
-        return self.whisper.transcribe(audio_data).strip()
+        """
+        pywhispercpp expects 16-bit PCM numpy arrays
+        """
+        # Convert float32 [-1, 1] to int16
+        int16_audio = (np.array(audio_data) * 32767).astype(np.int16)
+        text = self.whisper.transcribe(int16_audio)
+        return text.strip()
 
     # -----------------------
     #  Listen for wake word
@@ -153,35 +136,7 @@ class ASR:
                 if len(audio_accum) > 0:
                     audio_accum = audio_accum[-self.sample_rate*2:]  # keep last 2 sec
 
-
     def close(self):
         self.stream.stop_stream()
         self.stream.close()
         self.audio_interface.terminate()
-
-
-
-
-##
-# 🗣️ How It Works
-# 1. Continuous audio streaming
-
-# A background thread reads from the I²S mic.
-
-# 2. VAD filters silence
-
-# Only voice regions are kept.
-
-# 3. Whisper does small streaming transcriptions
-
-# Every ~0.5 seconds of speech, partial Whisper results appear.
-
-# 4. Wake word detection
-
-# When Whisper outputs something containing "hey pi" → activation happens.
-
-# 5. Command mode
-
-# After wake word, the next speech chunk is recorded fully and sent to Whisper for a final, accurate transcription.
-
-# 6. System resets back to wake-word mode
