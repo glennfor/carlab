@@ -1,2 +1,141 @@
+import asyncio
+import os
+
+import pyaudio
+from elevenlabs import ElevenLabs
+
+
 class Vocalizer:
-    pass
+    def __init__(self, 
+                 api_key=None,
+                 voice_id="JBFqnCBsd6RMkjVDRZzb",
+                 model_id="eleven_multilingual_v2",
+                 device_index=None,
+                 sample_rate=44100,
+                 output_format="pcm_44100"):
+        self.api_key = api_key or os.getenv("ELEVENLABS_API_KEY")
+        if not self.api_key:
+            raise ValueError("Missing ELEVENLABS_API_KEY. Provide it as parameter or set as environment variable.")
+        
+        self.voice_id = voice_id
+        self.model_id = model_id
+        self.device_index = device_index
+        self.sample_rate = sample_rate
+        self.output_format = output_format
+        
+        self.client = ElevenLabs(api_key=self.api_key)
+        self.audio = pyaudio.PyAudio()
+        self.stream = None
+        
+        # List available output devices
+        p = self.audio
+        for i in range(p.get_device_count()):
+            info = p.get_device_info_by_index(i)
+            if info['maxOutputChannels'] > 0:
+                print(f"Output Device {i}: {info['name']} ({info['maxOutputChannels']} channels)")
+
+    def _setup_audio_stream(self):
+        """Setup PyAudio output stream."""
+        if self.stream:
+            return
+        
+        stream_kwargs = {
+            "format": pyaudio.paInt16,
+            "channels": 1,
+            "rate": self.sample_rate,
+            "output": True,
+        }
+        
+        if self.device_index is not None:
+            stream_kwargs["output_device_index"] = self.device_index
+        
+        self.stream = self.audio.open(**stream_kwargs)
+
+    def _close_audio_stream(self):
+        """Close PyAudio output stream."""
+        if self.stream:
+            self.stream.stop_stream()
+            self.stream.close()
+            self.stream = None
+
+    def speak(self, text):
+        """Convert text to speech and play it directly."""
+        if not text or not text.strip():
+            return
+        
+        self._setup_audio_stream()
+        
+        try:
+            # Stream audio from ElevenLabs
+            audio_stream = self.client.text_to_speech.stream(
+                text=text,
+                voice_id=self.voice_id,
+                model_id=self.model_id,
+                output_format=self.output_format
+            )
+            
+            # Play audio chunks as they arrive
+            for chunk in audio_stream:
+                if isinstance(chunk, bytes):
+                    self.stream.write(chunk)
+            
+            # Flush any remaining buffer
+            self.stream.write(b"")
+            
+        except Exception as e:
+            print(f"Error during speech synthesis: {e}")
+            raise
+        finally:
+            # Keep stream open for potential reuse
+            pass
+
+    def speak_async(self, text):
+        """Convert text to speech asynchronously (non-blocking)."""
+        import threading
+        
+        def _speak_thread():
+            try:
+                self.speak(text)
+            except Exception as e:
+                print(f"Error in async speech: {e}")
+        
+        thread = threading.Thread(target=_speak_thread, daemon=True)
+        thread.start()
+        return thread
+
+    def close(self):
+        """Close audio stream and cleanup."""
+        self._close_audio_stream()
+        if self.audio:
+            self.audio.terminate()
+
+    def __enter__(self):
+        """Context manager entry."""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit."""
+        self.close()
+
+
+# Usage example
+if __name__ == '__main__':
+    ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
+    
+    if not ELEVENLABS_API_KEY:
+        raise ValueError("Missing ELEVENLABS_API_KEY")
+    
+    vocalizer = Vocalizer(api_key=ELEVENLABS_API_KEY, device_index=None)
+    
+    try:
+        print("Speaking: Hello, this is a test of the ElevenLabs vocalizer.")
+        vocalizer.speak("Hello, this is a test of the ElevenLabs vocalizer.")
+        
+        print("Speaking asynchronously: This is an async test.")
+        thread = vocalizer.speak_async("This is an async test.")
+        thread.join()
+        
+    except KeyboardInterrupt:
+        print("\nInterrupted by user")
+    finally:
+        vocalizer.close()
