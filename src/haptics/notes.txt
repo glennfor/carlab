@@ -1,0 +1,1 @@
+Receive signals about touch via uart from PSOC

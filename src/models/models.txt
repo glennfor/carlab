@@ -1,0 +1,4 @@
+├── models/
+ │    ├── phi3-mini.gguf
+ │    ├── whisper-base.en.bin
+ │    └── piper-voice.onnx

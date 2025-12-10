@@ -1,0 +1,195 @@
+git config --global user.name "Glen Nfor"
+git config --global user.email "glennfor72@gmail.com"
+
+Libraries: Ensure evdev and pigpio are installed:
+
+Bash
+
+sudo apt install python3-evdev python3-pigpio
+pigpio Daemon: Make sure the pigpiod service is running:
+
+Bash
+
+sudo systemctl start pigpiod
+Controller Path: You may need to adjust the GAMEPAD_DEVICE_PATH if your 
+controller is not at /dev/input/event0. You can find the correct path by running
+ls /dev/input/by-id/ after connecting your controller.
+
+
+sudo apt update
+sudo apt install evtest
+
+sudo apt update
+sudo apt install raspi-gpio
+
+
+TO find it:
+
+ sudo evtest
+
+ ========
+
+
+ DEFAULT_AXES = {
+    ecodes.ABS_X:  ("Left Stick X", -32768, 32767),
+    ecodes.ABS_Y:  ("Left Stick Y", -32768, 32767),
+    ecodes.ABS_RX: ("Right Stick X", -32768, 32767),
+    ecodes.ABS_RY: ("Right Stick Y", -32768, 32767),
+    ecodes.ABS_Z:  ("Left Trigger", 0, 255),
+    ecodes.ABS_RZ: ("Right Trigger", 0, 255),
+    ecodes.ABS_HAT0X: ("D-Pad X", -1, 1),
+    ecodes.ABS_HAT0Y: ("D-Pad Y", -1, 1),
+}
+
+
+sensor.py
+
+motor_controller.py
+
+camera.py
+
+brain.py
+
+
+
+pip install -U langchain
+# Requires Python 3.10+
+
+pip install -q -U google-genai
+
+sudo apt install python3-pyaudio
+
+pigpio
+==========
+sudo pigpiod
+
+Run Tests
+==============
+python -m actions.controllers.example_usage / python -m actions_archive.controllers.example_usage
+
+python -m src.tts.example_online(python tts/example_offline.py)
+
+
+python src/actions/tests/test_movements.py
+
+python -m src.actions.controllers.example_usage
+python src/actions/tests/test_movements.py
+
+APi Key
+======
+export GEMINI_API_KEY="AIzaSyDKx9rdI9wRMb5lv0DXNeWaIAUYzziR6mo"
+export OPENAI_API_KEY="sk-..."
+
+
+Virtual env: python3 -m venv venv, python3 -m venv --system-site-packages venv
+==========
+source venv/bin/activate
+deactivate
+
+
+
+Intalling pyaudio(in virtual env)
+-==========
+sudo apt update
+sudo apt install portaudio19-dev python3-dev
+pip install pyaudio
+
+
+available_voices = [
+        "Kore", "Puck", "Zephyr", "Fenrir", "Charon", "Leda",
+        "Orus", "Aoede", "Enceladus", "Callirrhoe", "Iapetus",
+        "Autonoe", "Umbriel", "Algieba", "Despina", "Rasalgethi",
+        "Erinome", "Algenib", "Achernar", "Alnilam", "Pulcherrima",
+        "Laomedeia", "Schedar", "Gacrux", "Zubenelgenubi", "Vindemiatrix",
+        "Achird", "Sadachbia", "Sadaltager", "Sulafat"
+    ]
+
+
+
+TTS with piper
+=================
+https://huggingface.co/csukuangfj/vits-piper-en_US-lessac-medium/tree/main
+
+
+STT+ASR with whisper CPP
+=====================
+sudo apt update
+sudo apt install python3-pip portaudio19-dev ffmpeg
+pip3 install openai-whisper pyaudio numpy
+
+pip install whispercpp
+
+whispercpp:
+
+- Steps
+git clone https://github.com/ggerganov/whisper.cpp
+cd whisper.cpp
+make -j stream
+./models/download-ggml-model.sh tiny.en
+
+- Instal cmake: sudo apt install cmake
+
+arecord -D plughw:4 -c1 -r 48000 -f S32_LE -t wav -V mono -v file.wav
+
+
+python -m src.asr.t
+python src/asr/t.py
+python src/asr/t2.py
+
+
+
+what i installed and miught remove
+======
+pyaudio
+
+sudo apt update
+sudo apt install python3-dev portaudio19-dev
+pip3 install pyaudio
+
+--
+pip3 install google-genai
+--
+sudo apt update
+sudo apt install -y python3-pip python3-dev libopenblas-dev libblas-dev libatlas-base-dev
+---
+pip3 install --upgrade pip
+pip3 install torch --extra-index-url https://download.pytorch.org/whl/cpu
+---
+pip install git+https://github.com/absadiki/pywhispercpp
+---
+pip install sounddevice
+---
+pip install webrtcvad
+--
+pip install whispercpp
+--
+pip install openai-whisper
+--
+pip install torchaudio --index-url https://download.pytorch.org/whl/torch_stable.html
+
+==
+sudo apt update
+sudo apt install -y libssl-dev libcurl4-openssl-dev build-essential
+pip install --no-binary :all: whisper-cpp-python
+
+========= Camera Support =============
+rpicam-vid
+--
+sudo apt update
+sudo apt install -y libcamera-apps
+python vision/t.py
+python vision/t.py
+python src/vision/aruco_follower_example.py
+python3 -m src.vision.aruco_follower_example
+python3 -m src.vision.t
+python src/vision/t.py
+
+
+
+
+sudo apt update
+sudo apt upgrade -y
+sudo apt install python3-pip python3-dev -y
+pip3 install opencv-python
+pip3 install opencv-python-headless  # if you don't need GUI support
+
