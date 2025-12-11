@@ -40,8 +40,13 @@ class Vocalizer:
         self.client = ElevenLabs(api_key=self.api_key)
         self.audio = pyaudio.PyAudio()
         self.stream = None
-        self.queue = queue.Queue()
-        self.running = True
+        self.audio_queue = queue.Queue()
+        self.running = False
+
+        p = self.audio
+        for i in range(p.get_device_count()):
+            info = p.get_device_info_by_index(i)
+            print(i, info["name"], info["maxOutputChannels"])
      
 
     def _setup_audio_stream(self):
@@ -72,7 +77,7 @@ class Vocalizer:
         """Convert text to speech and play it directly."""
         if not text or not text.strip():
             return
-        
+        print('Speaking.........>>> '+ text)
         self._setup_audio_stream()
         
         try:
@@ -83,7 +88,7 @@ class Vocalizer:
                 model_id=self.model_id,
                 output_format=self.output_format
             )
-            
+            print('Speaking Chunks.....')
             # Play audio chunks as they arrive
             for chunk in audio_stream:
                 if isinstance(chunk, bytes):
@@ -92,7 +97,8 @@ class Vocalizer:
             
             # Flush any remaining buffer
             self.stream.write(b"")
-            
+            print('Speaking Chunks..33333 end...')
+
         except Exception as e:
             print(f"Error during speech synthesis: {e}")
             raise
@@ -108,7 +114,7 @@ class Vocalizer:
             except Exception as e:
                 print(f"Error in async speech: {e}")
         
-        thread = threading.Thread(target=_speak_thread, daemon=True)
+        thread = threading.Thread(target=_speak_thread)
         thread.start()
         return thread
     
@@ -132,9 +138,10 @@ class Vocalizer:
         """Private method: processes the queue in a loop."""
         while self.running:
             try:
-                text = self._queue.get(timeout=1)
+                text = self.audio_queue.get(timeout=1)
                 if text is None:
                     continue
+                print('Have to say>>> '+ text)
                 self.speak(text)
             except queue.Empty:
                 continue
@@ -146,12 +153,12 @@ class Vocalizer:
         if self.running:
             return  # Already running
         self.running = True
-        self._thread = threading.Thread(target=self._run_loop, daemon=True)
+        self._thread = threading.Thread(target=self._run_loop)
         self._thread.start()
     
     def queue(self, text):
         """Add text to the vocalizer queue."""
-        self.queue.put(text)
+        self.audio_queue.put(text)
     
     def stop(self):
         """Stop the vocalizer."""
@@ -181,11 +188,11 @@ if __name__ == '__main__':
     if not ELEVENLABS_API_KEY:
         raise ValueError("Missing ELEVENLABS_API_KEY")
     
-    vocalizer = Vocalizer(api_key=ELEVENLABS_API_KEY, sample_rate=48000, device_index=2)
+    vocalizer = Vocalizer(api_key=ELEVENLABS_API_KEY, sample_rate=48000, device_index=4)
     print('[Vocalizer] Initialised')
     try:
-        print("Speaking: Hello, this is a test of the ElevenLabs vocalizer.")
-        vocalizer.speak("Hello, this is a test of the ElevenLabs vocalizer.")
+        print("Speaking: Hello, this is a test of the vocalizer.")
+        vocalizer.speak("Hello, this is a test of the vocalizer.")
         
         print("Speaking asynchronously: This is an async test.")
         thread = vocalizer.speak_async("This is an async test.")

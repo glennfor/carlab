@@ -6,3 +6,5 @@ llm:
 	venv/bin/python -m src.llm.google
 sys:
 	venv/bin/python main.py
+snd:
+	venv/bin/python -m src.tts.vocalizer

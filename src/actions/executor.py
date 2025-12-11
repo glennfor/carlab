@@ -12,6 +12,8 @@ from llm.google import GoogleLLM
 from tts.vocalizer import Vocalizer
 from vision.aruco_follower import ArUcoFollower
 
+import concurrent.futures
+
 
 class StepSize(Enum):
     TINY = "tiny"
@@ -123,7 +125,8 @@ class Executor:
         self.follower = follower
         self.vocalizer = vocalizer
         self.mapper = FunctionMapper()
-        self.llm = GoogleLLM(functions=self.mapper.get_functions_mappings())
+        # print(f"Passing {len(funcs)} functions to LLM: {[f['name'] for f in funcs]}")
+        self.llm = GoogleLLM(functions=self.mapper.get_functions_mappings()[:2])
 
         # command queue - this is the queue of commands that are received from the user and will
         # be processed by the llm and executed by the robot
@@ -178,6 +181,12 @@ class Executor:
         self.spin_duration = 0.5
         self.default_speed = 0.5
     
+        # Initialize ThreadPool for LLM execution (Blocking I/O operations)
+        # Using max_workers=1 ensures LLM requests are processed sequentially
+        # without limiting other system functions.
+        self.llm_executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+        self.llm_futures = [] # To track running LLM tasks
+
     def _initialize_subsystems(self):
         """Initialize queues and locks for each subsystem."""
         subsystems = self.mapper.config.get("subsystems", {})
@@ -261,13 +270,15 @@ class Executor:
         """Start the execution threads."""
         if not self.is_running:
             self.is_running = True
+
+            print('[]T-E'*5)
             
             # Start command thread
-            self.command_thread = threading.Thread(target=self._command_loop, daemon=True)
+            self.command_thread = threading.Thread(target=self._command_loop)
             self.command_thread.start()
             
             # Start receiving thread
-            self.receiving_thread = threading.Thread(target=self._receiving_loop, daemon=True)
+            self.receiving_thread = threading.Thread(target=self._receiving_loop)
             self.receiving_thread.start()
             
             # Start subsystem threads
@@ -310,16 +321,70 @@ class Executor:
         """Add a command to the command queue."""
         self.command_queue.put(command)
 
+    def _process_llm_result(self, future: concurrent.futures.Future):
+        """Callback function to handle the result of the LLM call."""
+        try:
+            # Re-raise any exception caught during the LLM execution in the thread pool
+            speech, function_calls = future.result()
+            
+            print('Got LLMMMMM::::::::::::::::::::', speech)
+            
+            # Add instructions and optionally queue speech
+            self.add_instructions(function_calls)
+            
+            if speech:
+                # self.vocalizer.queue(speech)
+                self.vocalizer.queue(speech)
+        except Exception as e:
+            # Handle exceptions from the LLM call itself (e.g., API errors, timeouts)
+            print(f"Error processing LLM result: {e}")
+
     def _command_loop(self):
+        """Receives text commands from the user and submits them to the thread pool for LLM processing."""
+        while self.is_running:
+            # 1. Check for completed LLM tasks
+            # This loop drains completed tasks and handles their results
+            self.llm_futures = [f for f in self.llm_futures if not f.done()]
+            
+            # 2. Get new command from queue
+            try:
+                command = self.command_queue.get(timeout=0.1)
+                if not command:
+                    continue
+                
+                print('Got the Command>>>>>>>>>>>>>>>>>:', command)
+
+                # Submit the blocking LLM call to the ThreadPoolExecutor
+                # This call is non-blocking to the _command_loop thread.
+                future = self.llm_executor.submit(self.llm.respond, command)
+                
+                # Attach the callback function to handle the result
+                future.add_done_callback(self._process_llm_result)
+                
+                # Track the future
+                self.llm_futures.append(future)
+                
+                self.command_queue.task_done()
+            
+            except queue.Empty:
+                # No new command, continue checking futures
+                time.sleep(0.01) # Small sleep to avoid busy-waiting
+                continue
+            
+            except Exception as e:
+                print(f"Error in command loop: {e}")
+
+    def _command_loop222(self):
         """Main recives text commands from the user and adds them to the command queue for processing by the llm."""
         while self.is_running:
             try:
                 command = self.command_queue.get(timeout=0.1)
-                if command:
-                    print('Got the Command:', command)
+                if not command:
+                    continue
+                print('Got the Command>>>>>>>>>>>>>>>>>:', command)
                 speech, function_calls = self.llm.respond(command)
                 self.add_instructions(function_calls)
-                print('Got LLMMMMM::::::', speech)
+                print('Got LLMMMMM::::::::::::::::::::', speech)
                 # might need to remove this
                 if speech:
                     self.vocalizer.queue(speech)

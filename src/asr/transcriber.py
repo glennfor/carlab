@@ -113,9 +113,13 @@ class Transcriber:
             text = str(event).strip()
         
         if text:
-            print(f"🎤 Command: {text}")
-            isCommand = 'string' in text or 'String' in text
-            if not isCommand:
+            # print(f"🎤 Command: {text}")
+            # isCommand = 'name' in text or 'Name' in text
+            # if not isCommand:
+            #     return
+            if 'test' in text:
+                text = 'Who are you and what do you do?'
+            else:
                 return
             
             if self.command_callback:
@@ -191,7 +195,7 @@ class Transcriber:
 
     def run(self):
         """Start threads and async loop."""
-        threading.Thread(target=self._stream_audio, daemon=True).start()
+        threading.Thread(target=self._stream_audio).start()
         print("Connecting to ElevenLabs STT...")
         asyncio.run(self.run_async())
 

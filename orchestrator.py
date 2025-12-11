@@ -12,8 +12,8 @@ class Orchestrator:
     def __init__(self):
         self.car = Car()
         self.aruco_follower = ArUcoFollower(car=self.car, marker_id=0, target_distance=0.15)
-        self.transcriber = Transcriber(device_index=2)
-        self.vocalizer = Vocalizer()
+        self.transcriber = Transcriber(device_index=3)
+        self.vocalizer = Vocalizer(sample_rate=48000, device_index=4)
         # self.google_llm = GoogleLLM(functions=self.function_map_list,)
         self.xbee_communicator = XBeeCommunicator()
         self.executor = Executor(car=self.car, follower=self.aruco_follower, vocalizer=self.vocalizer)

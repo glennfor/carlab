@@ -36,7 +36,7 @@ class GoogleLLM:
                 disable=True
             ),
             system_instruction=[
-                types.Part(text="You are the brain of a pet robot."),
+                types.Part(text="You are the brain of a pet robot. Your name is carpet!"),
                 types.Part(text="Always be creative in your responses."),
                 types.Part(text="You are able to call functions to perform actions."),
             ]
