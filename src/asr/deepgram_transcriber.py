@@ -123,7 +123,7 @@ class DeepgramTranscriber:
 
         if text:
             print(f"🎤 Final: {text}")
-            is_command = "open" in text.lower()
+            is_command = "carpet" in text.lower()
             if not is_command:
                 return
 
@@ -159,11 +159,13 @@ class DeepgramTranscriber:
     async def run_async(self):
         """Async main loop for Deepgram connection and audio sending."""
         try:
-            self.client = DeepgramClient(self.api_key)
+            self.client = DeepgramClient()
 
             options = {
                 "model": self.model,
                 "language": self.language,
+                "encoding": "linear16",
+                "sample_rate": self.sample_rate,
                 "smart_format": self.smart_format,
                 "interim_results": self.interim_results,
                 "utterance_end_ms": self.utterance_end_ms,
@@ -195,8 +197,9 @@ class DeepgramTranscriber:
                         if not data:
                             continue
 
-                        resampled_data = downsample_48k_to_16k(data)
-                        connection.send_media(resampled_data)
+                        # resampled_data = downsample_48k_to_16k(data)
+                        # connection.send_media(resampled_data)
+                        connection.send_media(data)
 
                         lock_exit.acquire()
                         if exit_flag:
@@ -228,7 +231,8 @@ class DeepgramTranscriber:
         """Start threads and async loop."""
         threading.Thread(target=self._stream_audio, daemon=True).start()
         print("Connecting to Deepgram STT...")
-        asyncio.run(self.run_async())
+        threading.Thread(target=lambda: asyncio.run(self.run_async())).start()
+        # asyncio.run(self.run_async())
 
     def close(self):
         """Close audio stream and cleanup."""
@@ -259,7 +263,7 @@ if __name__ == "__main__":
     if not DEEPGRAM_API_KEY:
         raise ValueError("Missing DEEPGRAM_API_KEY")
 
-    transcriber = DeepgramTranscriber(api_key=DEEPGRAM_API_KEY, device_index=1)
+    transcriber = DeepgramTranscriber(api_key=DEEPGRAM_API_KEY, device_index=2)
     print("Setup complete")
     transcriber.set_command_callback(example_llm_callback)
     print("[Now] - Listening")

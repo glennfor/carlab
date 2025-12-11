@@ -1,6 +1,7 @@
 from src.com.xbee import XBeeCommunicator
 from src.actions.car import Car
 from src.asr.transcriber import Transcriber
+from src.asr.deepgram_transcriber import DeepgramTranscriber
 from src.llm.google import GoogleLLM
 from src.tts.vocalizer import Vocalizer
 from src.vision.aruco_follower import ArUcoFollower
@@ -24,7 +25,8 @@ class Orchestrator:
                                 angle_ki=0.05,
                                 angle_kd=0.02,
                             )
-        self.transcriber = Transcriber(device_index=2)
+        # self.transcriber = Transcriber(device_index=2)
+        self.deepgram_transcriber = DeepgramTranscriber(device_index=2)
         self.vocalizer = Vocalizer(sample_rate=48000, device_index=3)
         # self.google_llm = GoogleLLM(functions=self.function_map_list,)
         self.xbee_communicator = XBeeCommunicator()
@@ -36,12 +38,16 @@ class Orchestrator:
         self.vocalizer.run()
         # self.google_llm.start()
         # self.xbee_communicator.start()
-        self.transcriber.set_command_callback(self.executor.add_command)
-        self.transcriber.run()
+        # self.transcriber.set_command_callback(self.executor.add_command)
+        # self.transcriber.run()
+
+        self.deepgram_transcriber.set_command_callback(self.executor.add_command)
+        self.deepgram_transcriber.run()
 
     def stop(self):
         self.aruco_follower.stop()
-        self.transcriber.stop()
+        # self.transcriber.stop()
+        self.deepgram_transcriber.stop()
         self.vocalizer.stop()
         # self.google_llm.stop()
         # self.xbee_communicator.stop()

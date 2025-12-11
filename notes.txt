@@ -185,6 +185,8 @@ pip install "elevenlabs[pyaudio]"
 pydub
 pip install scipy
 
+pip install deepgram-sdk
+pip install httpx
 
 ========= Camera Support =============
 rpicam-vid
@@ -211,3 +213,9 @@ is there a better way for loggin since printing dooes work from the threads?
 
 
 # reply in the present( I am ...)
+
+
+
+- lentgh of speech + speed
+- utterance problem
+-   

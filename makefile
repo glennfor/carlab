@@ -10,5 +10,7 @@ snd:
 	venv/bin/python -m src.tts.vocalizer
 asr:
 	venv/bin/python -m src.asr.transcriber
+asr2:
+	venv/bin/python -m src.asr.deepgram_transcriber
 main:
 	venv/bin/python main.py
