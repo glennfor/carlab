@@ -193,7 +193,7 @@ class DeepgramTranscriber:
 
                 while True:
                     try:
-                        data = self.audio_queue.get(timeout=1)
+                        data = self.audio_queue.get(timeout=0.1)
                         if not data:
                             continue
 

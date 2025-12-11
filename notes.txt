@@ -182,7 +182,6 @@ sudo apt-get install libportaudio2 libportaudiocpp0 portaudio19-dev \
 
 pip install elevenlabs
 pip install "elevenlabs[pyaudio]"
-pydub
 pip install scipy
 
 pip install deepgram-sdk
@@ -206,8 +205,9 @@ python src/vision/t.py
 sudo apt update
 sudo apt upgrade -y
 sudo apt install python3-pip python3-dev -y
-pip3 install opencv-python
-pip3 install opencv-python-headless  # if you don't need GUI support
+pip3 install opencv-python==4.10.0.84
+pip3 install opencv-python-headless  
+# if you don't need GUI support
 
 is there a better way for loggin since printing dooes work from the threads?
 
@@ -215,7 +215,12 @@ is there a better way for loggin since printing dooes work from the threads?
 # reply in the present( I am ...)
 
 
-
-- lentgh of speech + speed
+- lentgh of speech + speedc-> change sample rate maybe?
+- reconnection when things fail
 - utterance problem
+- microphone volume
+- the prompt: noisy environemt
+- proper voice
+
+
 -   

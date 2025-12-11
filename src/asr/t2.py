@@ -1,211 +1,125 @@
+""" Demonstrates how interim results work.
+    Python version: 3.6+
+    Dependencies (use `pip install X` to install a dependency):
+      - websockets
+    Usage:
+      python show-final.py -k 'YOUR_DEEPGRAM_API_KEY' /path/to/audio.wav
+    Limitations:
+      - Only parses signed, 16-bit little-endian encoded WAV files.
+    Notes:
+      - Need a file? Grab one here: http://static.deepgram.com/examples/interview_speech-analytics.wav
+"""
+
+import argparse
 import asyncio
-import queue
-import threading
-import os
 import base64
+import json
+import sys
+import wave
 
-import pyaudio
-from elevenlabs import AudioFormat, CommitStrategy, ElevenLabs, RealtimeEvents, RealtimeAudioOptions
+import websockets
 
-import numpy as np
-# import scipy.signal
+# Mimic sending a real-time stream by sending this many seconds of audio at a time.
+REALTIME_RESOLUTION = 0.100
 
-#======= Safely stop ALSA spam==
-# import ctypes
-# import ctypes.util
+async def run(data, key, channels, sample_width, sample_rate):
+    """ Connect to the Deepgram real-time streaming endpoint, stream the data
+        in real-time, and print out the responses from the server.
 
-# def hide_alsa_errors():
-#     ERROR_HANDLER_FUNC = ctypes.CFUNCTYPE(
-#         None, ctypes.c_char_p, ctypes.c_int,
-#         ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p
-#     )
-#     def no_errors(*args):
-#         pass
-#     c_error_handler = ERROR_HANDLER_FUNC(no_errors)
-#     asound = ctypes.cdll.LoadLibrary(ctypes.util.find_library('asound'))
-#     asound.snd_lib_error_set_handler(c_error_handler)
+        This uses a pre-recorded file as an example. It mimics a real-time
+        connection by sending `REALTIME_RESOLUTION` seconds of audio every
+        `REALTIME_RESOLUTION` seconds of wall-clock time.
 
-# hide_alsa_errors()
-#==============
+        This is a toy example, since it uses a pre-recorded file. In a real use
+        case, you'd be streaming the audio stream itself. If you actually have
+        pre-recorded audio, use Deepgram's pre-recorded mode instead.
+    """
+    # How many bytes are contained in one second of audio.
+    byte_rate = sample_width * sample_rate * channels
 
-def downsample_48k_to_16k(data_bytes):
-    # Convert bytes to numpy array
-    audio = np.frombuffer(data_bytes, dtype=np.int16)
-    # Resample
-    # Less accurate, introduces aliasing
-    resampled = audio[::3] #scipy.signal.resample_poly(audio, 1, 3)  # 48k -> 16k
-    return resampled.tobytes()
-
-class ElevenLabsASR:
-    def __init__(self, 
-                api_key, 
-                model_id="scribe_v2_realtime", 
-                device_index=0,
-                sample_rate=48000, 
-                chunk=1024):
-        self.api_key = api_key
-        self.model_id = model_id
-        self.sample_rate = sample_rate
-        self.chunk = chunk
-        self.device_index = device_index
-        self.audio = pyaudio.PyAudio()
-        p = self.audio
-
-        for i in range(p.get_device_count()):
-            info = p.get_device_info_by_index(i)
-            if info['maxInputChannels'] > 0:
-                print(f"Index {i}: {info['name']} ({info['maxInputChannels']} channels)")
-
-        self.stream = self.audio.open(
-            format=pyaudio.paInt16,
-            channels=1,
-            rate=sample_rate,
-            input=True,
-            frames_per_buffer=chunk,
-            input_device_index=device_index
-        )
-        self.audio_queue = queue.Queue()
-        # self.audio_queue = asyncio.Queue()
-
-        self.command_callback = None
-        self.client = ElevenLabs(api_key=api_key)
-        self.connection = None
-
-    def set_command_callback(self, callback):
-        """Set a callback function to handle transcribed commands, e.g., send to LLM."""
-        self.command_callback = callback
-
-    def _stream_audio(self):
-        """Thread: Read mic audio and put in queue."""
-        while True:
+    # Connect to the real-time streaming endpoint, attaching our API key.
+    async with websockets.connect(
+        f'wss://api.deepgram.com/v1/listen?channels={channels}&sample_rate={sample_rate}&encoding=linear16',
+        extra_headers={
+            'Authorization': 'Token {}'.format(key)
+        }
+    ) as ws:
+        async def sender(ws):
+            """ Sends the data, mimicking a real-time connection.
+            """
+            nonlocal data
             try:
-                data = self.stream.read(self.chunk, exception_on_overflow=False)
-                self.audio_queue.put(data)
+                total = len(data)
+                while len(data):
+                    # How many bytes are in `REALTIME_RESOLUTION` seconds of audio?
+                    i = int(byte_rate * REALTIME_RESOLUTION)
+                    chunk, data = data[:i], data[i:]
+                    # Send the data
+                    await ws.send(chunk)
+                    # Mimic real-time by waiting `REALTIME_RESOLUTION` seconds
+                    # before the next packet.
+                    await asyncio.sleep(REALTIME_RESOLUTION)
+
+                # A CloseStream message tells Deepgram that no more audio
+                # will be sent. Deepgram will close the connection once all
+                # audio has finished processing.
+                await ws.send(json.dumps({
+                    "type": "CloseStream"
+                }))
             except Exception as e:
-                print(f"Audio stream error: {e}")
-                break
+                print(f'Error while sending: {e}')
+                raise
 
-    def _on_partial_transcript(self, event):
-        """Handle partial transcript events for wake word detection."""
-        if isinstance(event, dict):
-            text = event.get("text", event.get("transcript", "")).strip().lower()
-        else:
-            text = str(event).strip().lower()
-        
-        # if text and self.listening_for_wakeword:
-            # if self.wake_word in text:
-            #     print("🚀 Wake word detected!")
-            #     self.listening_for_wakeword = False
-            #     print("Now listening for command...")
-
-    def _on_committed_transcript(self, event):
-        """Handle committed transcript events for command processing."""
-        if isinstance(event, dict):
-            text = event.get("text", event.get("transcript", "")).strip()
-        else:
-            text = str(event).strip()
-        
-        if text:
-            print(f"🎤 Command: {text}")
-            if self.command_callback:
-                self.command_callback(text)
-            else:
-                print(f"Transcribed command (send to LLM): {text}")
-            # self.listening_for_wakeword = True
-            # print("Listening for wake word...")
-
-    def _on_error(self, error):
-        """Handle error events."""
-        print(f"Error: {error}")
-
-    def _on_close(self):
-        """Handle connection close events."""
-        print("Connection closed")
-
-    async def run_async(self):
-        """Async main loop for SDK connection and audio sending."""
-        try:
-            self.connection = await self.client.speech_to_text.realtime.connect(RealtimeAudioOptions(
-                model_id=self.model_id,
-                language_code="en",
-                sample_rate=self.sample_rate,
-                audio_format=AudioFormat.PCM_16000,
-                commit_strategy=CommitStrategy.VAD,
-                vad_silence_threshold_secs=1.0,
-                vad_threshold=0.5,
-                min_speech_duration_ms=250,
-                include_timestamps=False,
-            ))
-
-            self.connection.on(RealtimeEvents.PARTIAL_TRANSCRIPT, self._on_partial_transcript)
-            self.connection.on(RealtimeEvents.COMMITTED_TRANSCRIPT, self._on_committed_transcript)
-            self.connection.on(RealtimeEvents.ERROR, self._on_error)
-            self.connection.on(RealtimeEvents.CLOSE, self._on_close)
-
-            print("Connected to ElevenLabs STT...")
-
-            while True:
-                try:
-                    data = self.audio_queue.get(timeout=1)
-                    if not data:
-                        continue
-                    resampled_data = downsample_48k_to_16k(data)
-
-                    # Send audio data to the connection
-                    # The SDK connection object should have a send method for audio bytes
-                    audio_base_64 = base64.b64encode(resampled_data).decode('utf-8')
-                    # audio_base_64 = base64.b64encode(data).decode('utf-8')
-                    # await self.connection.send(data)
-                    
-                    await self.connection.send({
-                        "audio_base_64": audio_base_64,
-                        "sample_rate": self.sample_rate,
-                    })
-                    # When ready to finalize the segment
-                    # await self.connection.commit()
-                except queue.Empty:
+        async def receiver(ws):
+            """ Print out the messages received from the server.
+            """
+            line_number = 0
+            async for msg in ws:
+                msg = json.loads(msg)
+                if 'request_id' in msg:
+                    # This is the final metadata message. It gets sent as the
+                    # very last message by Deepgram during a clean shutdown.
+                    # There is no transcript in it.
                     continue
-                except Exception as e:
-                    print(f"Send error: {e}")
-                    break
+                # Grab the transcript.
+                transcript = msg['channel']['alternatives'][0]['transcript']
+                is_final = msg['is_final']
+                start = msg['start']
+                end = start + msg['duration']
+                line_number += 1
+                print(f'{line_number:>3} {start:<3.3f}-{end:<3.3f} ["is_final": {str(is_final).lower():<5}] {transcript}')
 
-        except Exception as e:
-            print(f"Connection error: {e}")
-        finally:
-            if self.connection:
-                await self.connection.close()
+        await asyncio.wait([
+            asyncio.ensure_future(sender(ws)),
+            asyncio.ensure_future(receiver(ws))
+        ])
 
-    def run(self):
-        """Start threads and async loop."""
-        threading.Thread(target=self._stream_audio, daemon=True).start()
-        print("Connecting to ElevenLabs STT...")
-        asyncio.run(self.run_async())
+###############################################################################
+def parse_args():
+    """ Parses the command-line arguments.
+    """
+    parser = argparse.ArgumentParser(description='Submits data to the real-time streaming endpoint.')
+    parser.add_argument('-k', '--key', required=True, help='YOUR_DEEPGRAM_API_KEY (authorization).')
+    parser.add_argument('input', help='Input file.')
+    return parser.parse_args()
 
-    def close(self):
-        """Close audio stream and cleanup."""
-        if self.stream:
-            self.stream.stop_stream()
-            self.stream.close()
-        if self.audio:
-            self.audio.terminate()
+###############################################################################
+def main():
+    """ Entrypoint for the example."
+    """
+    # Parse the command-line arguments.
+    args = parse_args()
 
-# Usage example
-def example_llm_callback(command):
-    # This would be your external LLM pipeline
-    print(f"Sending to LLM: {command}")
-    # e.g., requests.post('http://your-llm-endpoint', json={'input': command})
+    # Open the audio file.
+    with wave.open(args.input, 'rb') as fh:
+        (channels, sample_width, sample_rate, num_samples, _, _) = fh.getparams()
+        assert sample_width == 2, 'WAV data must be 16-bit.'
+        data = fh.readframes(num_samples)
+    print(f'Channels = {channels}, Sample Rate = {sample_rate} Hz, Sample width = {sample_width} bytes, Size = {len(data)} bytes', file=sys.stderr)
 
+    # Run the example.
+    asyncio.get_event_loop().run_until_complete(run(data, args.key, channels, sample_width, sample_rate))
+
+###############################################################################
 if __name__ == '__main__':
-    print('Starting listener')
-    ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
-
-    if not ELEVENLABS_API_KEY:
-        raise ValueError("Missing ELEVENLABS_API_KEY")
-    asr = ElevenLabsASR(api_key=ELEVENLABS_API_KEY, device_index=1)
-    print('Setup')
-    asr.set_command_callback(example_llm_callback)
-    print('[Now] - Listening')
-    try:
-        asr.run()
-    except KeyboardInterrupt:
-        asr.close()
+    sys.exit(main() or 0)

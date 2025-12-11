@@ -147,7 +147,7 @@ class Vocalizer:
         """Private method: processes the queue in a loop."""
         while self.running:
             try:
-                text = self.audio_queue.get(timeout=1)
+                text = self.audio_queue.get(timeout=0.1)
                 if text is None:
                     continue
                 print('Have to say>>> '+ text)

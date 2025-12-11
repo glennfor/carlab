@@ -1,14 +1,15 @@
 import asyncio
-import queue
-import threading
-import os
-import random
 import base64
-
-import pyaudio
-from elevenlabs import AudioFormat, CommitStrategy, ElevenLabs, RealtimeEvents, RealtimeAudioOptions
+import os
+import queue
+import random
+import threading
 
 import numpy as np
+import pyaudio
+from elevenlabs import (AudioFormat, CommitStrategy, ElevenLabs,
+                        RealtimeAudioOptions, RealtimeEvents)
+
 # import scipy.signal
 
 #======= Safely stop ALSA spam==
@@ -159,7 +160,7 @@ class Transcriber:
 
             while True:
                 try:
-                    data = self.audio_queue.get(timeout=1)
+                    data = self.audio_queue.get(timeout=0.1)
                     if not data:
                         continue
                     resampled_data = downsample_48k_to_16k(data)
