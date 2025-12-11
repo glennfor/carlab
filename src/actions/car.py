@@ -6,20 +6,20 @@ from .motor import Motor
 class Car:
 
     # MOTOR 1 (M1) - ASSUMED PINS: PWM:13, FWD:5, REV:6
-    # M1_PWM_PIN = 13
-    # M1_INA_PIN = 5
-    # M1_INB_PIN = 6
+    M1_PWM_PIN = 13
+    M1_INA_PIN = 5
+    M1_INB_PIN = 6
 
 
-    # # MOTOR 2 (M2) - ASSUMED PINS: PWM:18, FWD:24, 10(REV)->23
-    # M2_PWM_PIN = 22
-    # M2_INA_PIN = 17
-    # M2_INB_PIN = 27
+    # MOTOR 2 (M2) - ASSUMED PINS: PWM:18, FWD:24, 10(REV)->23
+    M2_PWM_PIN = 22
+    M2_INA_PIN = 17
+    M2_INB_PIN = 27
 
-    # # MOTOR 3 (M3) - ASSUMED PINS: PWM:16, FWD:21, REV:20
-    # M3_PWM_PIN = 16 #12, 16(probklem)
-    # M3_INA_PIN = 21
-    # M3_INB_PIN = 20
+    # MOTOR 3 (M3) - ASSUMED PINS: PWM:16, FWD:21, REV:20
+    M3_PWM_PIN = 16 #12, 16(probklem)
+    M3_INA_PIN = 21
+    M3_INB_PIN = 20
     
     #  # MOTOR 3 (M3) - ASSUMED PINS: PWM:16, FWD:21, REV:20
     # M3_PWM_PIN = 25
@@ -42,18 +42,18 @@ class Car:
     # M3_INB_PIN = 24
 
     # --- Motor pin definitions ---
-    M1_PWM_PIN = 20#16
-    M1_INA_PIN = 5
-    M1_INB_PIN = 6
+    # M1_PWM_PIN = 20#16
+    # M1_INA_PIN = 5
+    # M1_INB_PIN = 6
 
-    # M2_PWM_PIN = 22
-    M2_PWM_PIN = 26
-    M2_INA_PIN = 17
-    M2_INB_PIN = 27
+    # # M2_PWM_PIN = 22
+    # M2_PWM_PIN = 26
+    # M2_INA_PIN = 17
+    # M2_INB_PIN = 27
 
-    M3_PWM_PIN = 25
-    M3_INA_PIN = 24
-    M3_INB_PIN = 23
+    # M3_PWM_PIN = 25
+    # M3_INA_PIN = 24
+    # M3_INB_PIN = 23
 
     def __init__(self):
         '''

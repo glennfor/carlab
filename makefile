@@ -1,5 +1,7 @@
 move:
 	venv/bin/python src/actions/tests/test_movements.py
+mov:
+	venv/bin/python src/actions/tests/t.py
 cam:
 	venv/bin/python -m src.vision.aruco_follower
 llm:

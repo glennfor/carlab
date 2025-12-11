@@ -1,19 +1,39 @@
 import time
 import RPi.GPIO as GPIO
 
-# --- Motor pin definitions ---
-M1_PWM_PIN = 20 #13 #16
+
+# MOTOR 1 (M1) - ASSUMED PINS: PWM:13, FWD:5, REV:6
+M1_PWM_PIN = 13
 M1_INA_PIN = 5
 M1_INB_PIN = 6
 
-# M2_PWM_PIN = 22
-M2_PWM_PIN = 26
+
+# MOTOR 2 (M2) - ASSUMED PINS: PWM:18, FWD:24, 10(REV)->23
+M2_PWM_PIN = 22
 M2_INA_PIN = 17
 M2_INB_PIN = 27
 
-M3_PWM_PIN = 25
-M3_INA_PIN = 24
-M3_INB_PIN = 23
+# MOTOR 3 (M3) - ASSUMED PINS: PWM:16, FWD:21, REV:20
+M3_PWM_PIN = 16 #12, 16(probklem)
+M3_INA_PIN = 21
+M3_INB_PIN = 20
+
+
+
+
+# # --- Motor pin definitions ---
+# M1_PWM_PIN = 20 #13 #16
+# M1_INA_PIN = 5
+# M1_INB_PIN = 6
+
+# # M2_PWM_PIN = 22
+# M2_PWM_PIN = 26
+# M2_INA_PIN = 17
+# M2_INB_PIN = 27
+
+# M3_PWM_PIN = 25
+# M3_INA_PIN = 24
+# M3_INB_PIN = 23
 
 # --- Setup GPIO ---
 GPIO.setmode(GPIO.BCM)
@@ -56,9 +76,9 @@ def run_motors(motor_indices, duty=90, duration=5):
 #     run_motors([i], duty=90, duration=5)
 
 # # 2. Test wheels in pairs
-# run_motors([0, 1], duty=40, duration=2)
-# run_motors([0, 2], duty=40, duration=2)
-# run_motors([1, 2], duty=40, duration=2)
+run_motors([0, 1], duty=40, duration=2)
+run_motors([0, 2], duty=40, duration=2)
+run_motors([1, 2], duty=40, duration=2)
 
 # 3. Test all wheels together
 # run_motors([0, 1, 2], duty=50, duration=5)
