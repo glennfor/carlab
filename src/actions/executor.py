@@ -125,8 +125,9 @@ class Executor:
         self.follower = follower
         self.vocalizer = vocalizer
         self.mapper = FunctionMapper()
-        # print(f"Passing {len(funcs)} functions to LLM: {[f['name'] for f in funcs]}")
-        self.llm = GoogleLLM(functions=self.mapper.get_functions_mappings()[:2])
+        funcs = self.mapper.get_functions_mappings()
+        print(f"Passing {len(funcs)} functions to LLM: {[f['name'] for f in funcs]}")
+        self.llm = GoogleLLM(functions=self.mapper.get_functions_mappings())
 
         # command queue - this is the queue of commands that are received from the user and will
         # be processed by the llm and executed by the robot

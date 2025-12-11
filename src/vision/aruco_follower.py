@@ -77,7 +77,7 @@ class ArUcoFollower:
         max_forward_speed: float = 0.4,
         max_rotation_speed: float = 0.5,
         # PID gains for distance control
-        distance_kp: float = 0.8,
+        distance_kp: float = 1.0,
         distance_ki: float = 0.1,
         distance_kd: float = 0.05,
         # PID gains for angle control
@@ -254,14 +254,24 @@ class ArUcoFollower:
             return False, None
 
         # ---- 3D pose estimation ----
-        rvec, tvec, _ = cv2.aruco.estimatePoseSingleMarkers(
-            marker_corners,
+        # rvec, tvec, _ = cv2.aruco.estimatePoseSingleMarkers(
+        #     marker_corners,
+        #     self.marker_size,
+        #     self.camera_matrix,
+        #     self.dist_coeffs
+        # )
+
+        # return True, tvec[0][0]  # return (tx,ty,tz)
+        
+
+        rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(
+            [marker_corners],
             self.marker_size,
             self.camera_matrix,
             self.dist_coeffs
         )
 
-        return True, tvec[0][0]  # return (tx,ty,tz)
+        return True, tvecs[0][0]  # return (tx, ty, tz)
 
     # -------------------------------------------------------
 
@@ -293,7 +303,7 @@ if __name__ == "__main__":
     print("Make sure you have an ArUco marker (ID 0, DICT_4X4_50)")
     print("Hold it in front of the camera to start following")
     print("Press Ctrl+C to stop")
-    print("=" * 50)
+    print("=" * 50, cv2.__version__)
     
     car = Car()
     follower = ArUcoFollower(
@@ -311,8 +321,9 @@ if __name__ == "__main__":
     )
     signal.signal(signal.SIGINT, lambda s, f: signal_handler(s, f, car, follower))
     signal.signal(signal.SIGTERM, lambda s, f: signal_handler(s, f, car, follower))
+    print(' Starting Follow')
     try:
-        follower.start()
+        follower.run()
         while follower.running:
             time.sleep(0.1)
     except KeyboardInterrupt:
@@ -321,3 +332,4 @@ if __name__ == "__main__":
         follower.stop()
         car.cleanup()
         sys.exit(0)
+    print('Stopping Follow')

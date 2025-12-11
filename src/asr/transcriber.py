@@ -117,8 +117,8 @@ class Transcriber:
             # isCommand = 'name' in text or 'Name' in text
             # if not isCommand:
             #     return
-            if 'test' in text:
-                text = 'Who are you and what do you do?'
+            if 'one two' in text:
+                text = 'Hey, follow the marker.'
             else:
                 return
             

@@ -11,9 +11,21 @@ import json
 class Orchestrator:
     def __init__(self):
         self.car = Car()
-        self.aruco_follower = ArUcoFollower(car=self.car, marker_id=0, target_distance=0.15)
-        self.transcriber = Transcriber(device_index=3)
-        self.vocalizer = Vocalizer(sample_rate=48000, device_index=4)
+        self.aruco_follower = ArUcoFollower(
+                                car=self.car,
+                                marker_id=0,
+                                target_distance=0.15,
+                                # distance control
+                                distance_kp=1.0,#0.8
+                                distance_ki=0.05,
+                                distance_kd=0.02,
+                                # angle control
+                                angle_kp=0.1, #0.08
+                                angle_ki=0.05,
+                                angle_kd=0.02,
+                            )
+        self.transcriber = Transcriber(device_index=1)
+        self.vocalizer = Vocalizer(sample_rate=48000, device_index=2)
         # self.google_llm = GoogleLLM(functions=self.function_map_list,)
         self.xbee_communicator = XBeeCommunicator()
         self.executor = Executor(car=self.car, follower=self.aruco_follower, vocalizer=self.vocalizer)

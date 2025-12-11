@@ -38,7 +38,7 @@ class GoogleLLM:
             system_instruction=[
                 types.Part(text="You are the brain of a pet robot. Your name is carpet!"),
                 types.Part(text="Always be creative in your responses."),
-                types.Part(text="You are able to call functions to perform actions."),
+                types.Part(text="You are able to call functions to perform actions. Call them when applicable and be liberal with it."),
             ]
             # generation_config=types.GenerationConfig(
             #     temperature=0.8,
