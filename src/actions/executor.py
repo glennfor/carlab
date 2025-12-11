@@ -127,6 +127,7 @@ class Executor:
         self.mapper = FunctionMapper()
         funcs = self.mapper.get_functions_mappings()
         print(f"Passing {len(funcs)} functions to LLM: {[f['name'] for f in funcs]}")
+        # print(funcs)
         self.llm = GoogleLLM(functions=self.mapper.get_functions_mappings())
 
         # command queue - this is the queue of commands that are received from the user and will
@@ -273,6 +274,7 @@ class Executor:
             self.is_running = True
 
             print('[]T-E'*5)
+            self.add_command('Hey, take two small steps right, walk backwards, then turn left and do a little dance.')
             
             # Start command thread
             self.command_thread = threading.Thread(target=self._command_loop)
@@ -329,6 +331,7 @@ class Executor:
             speech, function_calls = future.result()
             
             print('Got LLMMMMM::::::::::::::::::::', speech)
+            print(function_calls)
             
             # Add instructions and optionally queue speech
             self.add_instructions(function_calls)
@@ -591,31 +594,17 @@ class Executor:
     
     def _start_aruco_following(self, params: Dict[str, Any]):
         """Wrapper: Start ArUco following."""
-        import os
-        import sys
-        sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-        from vision.aruco_follower import ArUcoFollower
-        
-        marker_id = params.get("marker_id", 0)
-        target_distance = params.get("target_distance", 0.15)
-        
-        follower = ArUcoFollower(
-            car=self.car,
-            marker_id=marker_id,
-            target_distance=target_distance
-        )
-        
-        if not follower.is_available():
+        if not self.follower.is_available():
             raise Exception("Camera not available for following")
         
-        self.active_follower = follower
-        follower.start()
+        self.active_follower = self.follower
+        self.follower.run()
         
         # Keep following until stopped
-        while follower.running and self.is_running:
+        while self.follower.running and self.is_running:
             time.sleep(0.1)
         
-        follower.stop()
+        self.follower.stop()
         self.active_follower = None
         self.car.drive(0, 0, 0)
     
@@ -719,9 +708,7 @@ class Executor:
             text = text_or_params
         
         if text:
-            from tts.vocalizer import Vocalizer
-            vocalizer = Vocalizer()
-            vocalizer.speak(text)
+            self.vocalizer.speak(text)
     
     def _play_sound(self, params: Dict[str, Any]):
         """Wrapper: Play a sound (placeholder)."""

@@ -114,14 +114,9 @@ class Transcriber:
         
         if text:
             # print(f"🎤 Command: {text}")
-            # isCommand = 'name' in text or 'Name' in text
-            # if not isCommand:
-            #     return
-            if 'one two' in text:
-                text = 'Hey, follow the marker.'
-            else:
+            isCommand = 'pi' in text.lower()
+            if not isCommand:
                 return
-            
             if self.command_callback:
                 self.command_callback(text)
             else:

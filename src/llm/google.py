@@ -38,7 +38,8 @@ class GoogleLLM:
             system_instruction=[
                 types.Part(text="You are the brain of a pet robot. Your name is carpet!"),
                 types.Part(text="Always be creative in your responses."),
-                types.Part(text="You are able to call functions to perform actions. Call them when applicable and be liberal with it."),
+                types.Part(text="Always provide a text reponse even when you call functions."),
+                types.Part(text="You are able to call functions to perform actions. Call them all the functions that are applicable to the instrctutions you have been given."),
             ]
             # generation_config=types.GenerationConfig(
             #     temperature=0.8,
@@ -63,10 +64,6 @@ class GoogleLLM:
             elapsed = time.time() - start_time
             print(f'LLM response received after {elapsed:.2f} seconds')
             
-            # Debug: print response object type and attributes
-            print(f'Response type: {type(response)}')
-            print(f'Response dir: {[attr for attr in dir(response) if not attr.startswith("_")]}')
-            
             # Safely access response attributes
             function_calls = getattr(response, 'function_calls', None)
             speech = getattr(response, 'text', None)
@@ -78,9 +75,14 @@ class GoogleLLM:
                     if hasattr(candidate, 'content') and hasattr(candidate.content, 'parts'):
                         text_parts = []
                         for part in candidate.content.parts:
-                            if hasattr(part, 'text'):
-                                text_parts.append(part.text)
+                            # Check if the 'text' attribute exists AND is not None
+                            text_content = getattr(part, 'text', None) 
+                            if isinstance(text_content, str):
+                                text_parts.append(text_content)
+                        # Join the collected strings
                         speech = ' '.join(text_parts) if text_parts else None
+            if speech is None:
+                speech = "Yes, sir. Getting to it!"
             
             print('Got---- speech: ', speech)
             print('Got---- function_calls: ', function_calls)
@@ -90,7 +92,7 @@ class GoogleLLM:
             print(f'ERROR in LLM respond: {type(e).__name__}: {e}')
             import traceback
             traceback.print_exc()
-            return "", []
+            return "Oops, I had a serious problem figuring out what to do. Sorry about that.", []
     
 
 if __name__ == "__main__":

@@ -227,7 +227,7 @@ class ArUcoFollower:
                     self.angle_pid.reset()
                 time.sleep(0.1)
 
-            time.sleep(0.03)
+            time.sleep(0.01)
 
     # -------------------------------------------------------
     # POSE DETECTION
