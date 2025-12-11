@@ -10,11 +10,12 @@ from elevenlabs import ElevenLabs
 from scipy.signal import resample
 
 
-def resample_audio(chunk: bytes, orig_sr: int, target_sr: int) -> bytes:
+def resample_audio(chunk: bytes, orig_sr: int, target_sr: int, , volume: float = 1.0) -> bytes:
     """Resample PCM16 audio chunk from orig_sr to target_sr."""
     audio = np.frombuffer(chunk, dtype=np.int16)
     num_samples = int(len(audio) * target_sr / orig_sr)
     resampled = resample(audio, num_samples)
+    resampled = resampled * volume
     resampled = np.clip(resampled, -32768, 32767).astype(np.int16)
     return resampled.tobytes()
 
@@ -82,7 +83,7 @@ class Vocalizer:
             self.stream.close()
             self.stream = None
 
-    def speak(self, text):
+    def speak(self, text, volume: float = 2.0):
         """Convert text to speech and play it directly."""
         if not text or not text.strip():
             return
@@ -101,7 +102,7 @@ class Vocalizer:
             # Play audio chunks as they arrive
             for chunk in audio_stream:
                 if isinstance(chunk, bytes):
-                    chunk = resample_audio(chunk, 16000, self.sample_rate)
+                    chunk = resample_audio(chunk, 16000, self.sample_rate, volume)
                     self.stream.write(chunk)
             
             # Flush any remaining buffer
