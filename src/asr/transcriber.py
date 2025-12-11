@@ -2,6 +2,7 @@ import asyncio
 import queue
 import threading
 import os
+import random
 import base64
 
 import pyaudio
@@ -107,14 +108,16 @@ class Transcriber:
 
     def _on_committed_transcript(self, event):
         """Handle committed transcript events for command processing."""
+        
         if isinstance(event, dict):
             text = event.get("text", event.get("transcript", "")).strip()
         else:
             text = str(event).strip()
-        
+
+        print('Catch insts? = ', text)
         if text:
-            # print(f"🎤 Command: {text}")
-            isCommand = 'pi' in text.lower()
+            print(f"🎤 Command: {text}")
+            isCommand = 'open' in text.lower()
             if not isCommand:
                 return
             if self.command_callback:
@@ -133,9 +136,6 @@ class Transcriber:
         print("Connection closed")
 
     async def run_async(self):
-        print('-----'*50)
-        print('Checking')
-        print('-----'*50)
         """Async main loop for SDK connection and audio sending."""
         try:
             self.connection = await self.client.speech_to_text.realtime.connect(RealtimeAudioOptions(
@@ -169,7 +169,6 @@ class Transcriber:
                     audio_base_64 = base64.b64encode(resampled_data).decode('utf-8')
                     # audio_base_64 = base64.b64encode(data).decode('utf-8')
                     # await self.connection.send(data)
-                    
                     await self.connection.send({
                         "audio_base_64": audio_base_64,
                         "sample_rate": self.sample_rate,
@@ -192,6 +191,7 @@ class Transcriber:
         """Start threads and async loop."""
         threading.Thread(target=self._stream_audio).start()
         print("Connecting to ElevenLabs STT...")
+        # threading.Thread(target=lambda: asyncio.run(self.run_async()), daemon=True).start()
         asyncio.run(self.run_async())
 
     def close(self):
@@ -229,3 +229,5 @@ if __name__ == '__main__':
         asr.run()
     except KeyboardInterrupt:
         asr.close()
+
+

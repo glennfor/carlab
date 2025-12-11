@@ -52,6 +52,13 @@ class Vocalizer:
     def _setup_audio_stream(self):
         """Setup PyAudio output stream."""
         if self.stream:
+            # Check if stream is active, if not restart it
+            try:
+                if not self.stream.is_active():
+                    self.stream.start_stream()
+            except Exception as e:
+                print(f"Stream check error, recreating: {e}")
+                self._close_audio_stream()
             return
         
         stream_kwargs = {
@@ -65,6 +72,8 @@ class Vocalizer:
             stream_kwargs["output_device_index"] = self.device_index
         
         self.stream = self.audio.open(**stream_kwargs)
+        self.stream.start_stream()  # Explicitly start the stream
+        
 
     def _close_audio_stream(self):
         """Close PyAudio output stream."""
@@ -188,7 +197,7 @@ if __name__ == '__main__':
     if not ELEVENLABS_API_KEY:
         raise ValueError("Missing ELEVENLABS_API_KEY")
     
-    vocalizer = Vocalizer(api_key=ELEVENLABS_API_KEY, sample_rate=48000, device_index=4)
+    vocalizer = Vocalizer(api_key=ELEVENLABS_API_KEY, sample_rate=48000, device_index=3)
     print('[Vocalizer] Initialised')
     try:
         print("Speaking: Hello, this is a test of the vocalizer.")

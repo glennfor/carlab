@@ -274,7 +274,8 @@ class Executor:
             self.is_running = True
 
             print('[]T-E'*5)
-            self.add_command('Hey, take two small steps right, walk backwards, then turn left and do a little dance.')
+            self.add_command('Hey, take two small steps right and walk backwards.')
+            # self.add_command('Hey, take two small steps right and walk backwards and then turn left and do a little dance.')
             
             # Start command thread
             self.command_thread = threading.Thread(target=self._command_loop)

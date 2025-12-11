@@ -208,3 +208,6 @@ pip3 install opencv-python
 pip3 install opencv-python-headless  # if you don't need GUI support
 
 is there a better way for loggin since printing dooes work from the threads?
+
+
+# reply in the present( I am ...)

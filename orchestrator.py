@@ -24,8 +24,8 @@ class Orchestrator:
                                 angle_ki=0.05,
                                 angle_kd=0.02,
                             )
-        self.transcriber = Transcriber(device_index=1)
-        self.vocalizer = Vocalizer(sample_rate=48000, device_index=2)
+        self.transcriber = Transcriber(device_index=2)
+        self.vocalizer = Vocalizer(sample_rate=48000, device_index=3)
         # self.google_llm = GoogleLLM(functions=self.function_map_list,)
         self.xbee_communicator = XBeeCommunicator()
         self.executor = Executor(car=self.car, follower=self.aruco_follower, vocalizer=self.vocalizer)
