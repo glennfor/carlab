@@ -165,13 +165,32 @@ class ArUcoFollower:
             self.use_new_api = False
 
         # Camera calibration (approx)
-        # focal_length = 640.0
-        focal_length = 800.0
+        width  = 640 # frame width
+        height = 480 # frame height
+
+        HFOV = math.radians(66)  # horizontal FOV
+        VFOV = math.radians(41)  # vertical FOV
+        # focal length
+        fx = width  / (2 * math.tan(HFOV / 2))
+        fy = height / (2 * math.tan(VFOV / 2))
+
+        # principal point
+        cx = width  / 2
+        cy = height / 2
+
+        # camera matrix
         self.camera_matrix = np.array([
-            [focal_length, 0, 320],
-            [0, focal_length, 240],
-            [0, 0, 1]
+            [fx,  0, cx],
+            [ 0, fy, cy],
+            [ 0,  0,  1]
         ], dtype=np.float32)
+
+        # focal_length = 640.0
+        # self.camera_matrix = np.array([
+        #     [focal_length, 0, 320],
+        #     [0, focal_length, 240],
+        #     [0, 0, 1]
+        # ], dtype=np.float32)
         self.dist_coeffs = np.zeros((4, 1), dtype=np.float32)
 
     # -------------------------------------------------------
@@ -307,8 +326,13 @@ class ArUcoFollower:
         #     self.camera_matrix,
         #     self.dist_coeffs
         # )
+<<<<<<< Updated upstream
         rvecs, tvecs = estimate_pose_single_markers(
             [marker_corners],
+=======
+        rvecs, tvecs, _ = estimate_pose_single_markers(
+            marker_corners,
+>>>>>>> Stashed changes
             self.marker_size,
             self.camera_matrix,
             self.dist_coeffs
