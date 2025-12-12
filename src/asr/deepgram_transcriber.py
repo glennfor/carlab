@@ -123,7 +123,8 @@ class DeepgramTranscriber:
 
         if text:
             print(f"🎤 Final: {text}")
-            is_command = "carpet" in text.lower()
+            wake_word = 'please'
+            is_command = wake_word in text.lower()
             if not is_command:
                 return
 
