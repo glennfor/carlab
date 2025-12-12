@@ -96,10 +96,10 @@ class Vocalizer:
                 text=text,
                 voice_id=self.voice_id,
                 model_id=self.model_id,
-                output_format=self.output_format
+                output_format=self.output_format,
                 voice_settings={
-                    "speed": 1.5
-                }
+                    "speed": 1.2
+                },
                 optimize_streaming_latency=2
             )
             print('Speaking Chunks.....')
