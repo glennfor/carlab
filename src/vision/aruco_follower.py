@@ -4,11 +4,11 @@ import signal
 import sys
 import threading
 import time
-from typing import Optional, Tuple
-
+import math
 import cv2
 import numpy as np
 from picamera2 import Picamera2
+from typing import Optional, Tuple
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from actions.car import Car
@@ -185,12 +185,12 @@ class ArUcoFollower:
             [ 0,  0,  1]
         ], dtype=np.float32)
 
-        # focal_length = 640.0
-        # self.camera_matrix = np.array([
-        #     [focal_length, 0, 320],
-        #     [0, focal_length, 240],
-        #     [0, 0, 1]
-        # ], dtype=np.float32)
+        focal_length = 640.0
+        self.camera_matrix = np.array([
+            [focal_length, 0, 320],
+            [0, focal_length, 240],
+            [0, 0, 1]
+        ], dtype=np.float32)
         self.dist_coeffs = np.zeros((4, 1), dtype=np.float32)
 
     # -------------------------------------------------------
@@ -232,7 +232,7 @@ class ArUcoFollower:
 
     def _follow_loop(self):
         last_seen = time.time()
-        lost_timeout = 2.0
+        lost_timeout = 1.0
         last_update_time = time.time()
 
         while self.running:
@@ -264,12 +264,12 @@ class ArUcoFollower:
                 vy = self.distance_pid.update(distance_error, dt)
 
                 # ---- Rotation using PID control on angle ----
-                angle_error = np.arctan2(tx, tz)
+                angle_error = tx#np.arctan2(tx, tz)
                 rotation = self.angle_pid.update(angle_error, dt)
 
                 # Debug print sometimes
-                if random.random() > 0.9:
-                    print(f"tz={tz:.2f}m  tx={tx:.2f}m  vy={vy:.2f}  rot={rotation:.2f}  "
+                if random.random() > 0.75:
+                    print(f"tz={tz:.2f}m  ty={ty:.2f}m  tx={tx:.2f}m  vy={vy:.2f}  rot={rotation:.2f}  "
                           f"dist_err={distance_error:.3f}  angle_err={angle_error:.3f}")
 
                 # Drive robot
@@ -326,13 +326,8 @@ class ArUcoFollower:
         #     self.camera_matrix,
         #     self.dist_coeffs
         # )
-<<<<<<< Updated upstream
         rvecs, tvecs = estimate_pose_single_markers(
             [marker_corners],
-=======
-        rvecs, tvecs, _ = estimate_pose_single_markers(
-            marker_corners,
->>>>>>> Stashed changes
             self.marker_size,
             self.camera_matrix,
             self.dist_coeffs
@@ -378,15 +373,15 @@ if __name__ == "__main__":
     follower = ArUcoFollower(
         car=car,
         marker_id=0,
-        target_distance=0.15,
+        target_distance=0.05,
         # distance control
         distance_kp=0.8,
-        distance_ki=0.05,
-        distance_kd=0.02,
+        distance_ki=0.00,
+        distance_kd=0.00,
         # angle control
-        angle_kp=0.08,
-        angle_ki=0.05,
-        angle_kd=0.02,
+        angle_kp=0.08,#0.08,
+        angle_ki=0.00,
+        angle_kd=0.00,
     )
     signal.signal(signal.SIGINT, lambda s, f: signal_handler(s, f, car, follower))
     signal.signal(signal.SIGTERM, lambda s, f: signal_handler(s, f, car, follower))

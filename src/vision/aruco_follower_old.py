@@ -373,9 +373,8 @@ class ArUcoFollower:
         """Main following loop."""
         print('[2] Starting following loop')
         last_seen_time = time.time()
-        marker_lost_timeout = 2.0
+        marker_lost_timeout = 1.0
         last_print_time = time.time()
-        print_interval = 1.0
         
         while self.running and not self.should_stop:
             frame = self.picam2.capture_array()
