@@ -98,7 +98,7 @@ class Vocalizer:
                 model_id=self.model_id,
                 output_format=self.output_format,
                 voice_settings={
-                    "speed": 1.2
+                    "speed": 1.1
                 },
                 optimize_streaming_latency=2
             )
@@ -202,7 +202,7 @@ if __name__ == '__main__':
     if not ELEVENLABS_API_KEY:
         raise ValueError("Missing ELEVENLABS_API_KEY")
     
-    vocalizer = Vocalizer(api_key=ELEVENLABS_API_KEY, sample_rate=48000, device_index=3)
+    vocalizer = Vocalizer(api_key=ELEVENLABS_API_KEY, sample_rate=48000, device_index=2)
     print('[Vocalizer] Initialised')
     try:
         print("Speaking: Hello, this is a test of the vocalizer.")

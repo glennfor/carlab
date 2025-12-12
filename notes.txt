@@ -223,4 +223,4 @@ is there a better way for loggin since printing dooes work from the threads?
 - proper voice
 
 
--   
+-  additional functions eg spea
