@@ -224,3 +224,8 @@ is there a better way for loggin since printing dooes work from the threads?
 
 
 -  additional functions eg spea
+- 
+play some simple tuens
+-   llm should know it is a budy enc and using stt and migth have issues
+
+alsamixer -c 4

@@ -254,8 +254,8 @@ class ArUcoFollower:
                 # --- Ensure valid forward distance ---
                 if tz < self.target_distance:
                     self.car.drive(0, 0, 0)
-                    # self.distance_pid.reset()
-                    # self.angle_pid.reset()
+                    self.distance_pid.reset()
+                    self.angle_pid.reset()
                     continue
 
                 # ---- Forward speed using PID control on distance ----

@@ -160,27 +160,27 @@ class Executor:
         
         # Speed mappings
         self.step_speeds = {
-            StepSize.TINY: 0.2,
-            StepSize.SMALL: 0.4,
-            StepSize.LARGE: 0.6
-        }
-        self.step_durations = {
-            StepSize.TINY: 0.3,
-            StepSize.SMALL: 0.5,
+            StepSize.TINY: 0.4,
+            StepSize.SMALL: 0.6,
             StepSize.LARGE: 0.8
         }
-        self.turn_speeds = {
-            TurnMagnitude.TINY: 0.2,
-            TurnMagnitude.SMALL: 0.4,
-            TurnMagnitude.LARGE: 0.6
+        self.step_durations = {
+            StepSize.TINY: 2,
+            StepSize.SMALL: 4,
+            StepSize.LARGE: 8
         }
-        self.turn_durations = {
-            TurnMagnitude.TINY: 0.3,
-            TurnMagnitude.SMALL: 0.5,
+        self.turn_speeds = {
+            TurnMagnitude.TINY: 0.4,
+            TurnMagnitude.SMALL: 0.6,
             TurnMagnitude.LARGE: 0.8
         }
+        self.turn_durations = {
+            TurnMagnitude.TINY: 2,
+            TurnMagnitude.SMALL: 5,
+            TurnMagnitude.LARGE: 8
+        }
         self.spin_speed = 0.5
-        self.spin_duration = 0.5
+        self.spin_duration = 2
         self.default_speed = 0.5
     
         # Initialize ThreadPool for LLM execution (Blocking I/O operations)

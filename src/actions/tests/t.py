@@ -72,13 +72,13 @@ def run_motors(motor_indices, duty=90, duration=5):
 
 # run_motors([1], duty=90, duration=5)
 # 1. Test wheels individually
-# for i in range(3):
-#     run_motors([i], duty=90, duration=5)
+for i in range(3):
+    run_motors([i], duty=90, duration=5)
 
 # # 2. Test wheels in pairs
-run_motors([0, 1], duty=40, duration=2)
-run_motors([0, 2], duty=40, duration=2)
-run_motors([1, 2], duty=40, duration=2)
+# run_motors([0, 1], duty=40, duration=2)
+# run_motors([0, 2], duty=40, duration=2)
+# run_motors([1, 2], duty=40, duration=2)
 
 # 3. Test all wheels together
 # run_motors([0, 1, 2], duty=50, duration=5)
