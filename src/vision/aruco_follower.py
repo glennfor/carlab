@@ -91,11 +91,13 @@ def estimate_pose_single_markers(corners, marker_length, camera_matrix, dist_coe
             flags=cv2.SOLVEPNP_IPPE_SQUARE  # best for planar square markers
         )
 
-        if not success:
-            raise RuntimeError("solvePnP failed for a marker")
-
-        rvecs.append(rvec)
-        tvecs.append(tvec)
+        if success:
+            rvecs.append(rvec)
+            tvecs.append(tvec)
+        else:
+            # If PnP fails, append placeholder values
+            rvecs.append(None)
+            tvecs.append(None)
 
     return np.array(rvecs), np.array(tvecs)
 
@@ -111,7 +113,7 @@ class ArUcoFollower:
         marker_id: int = 0,
         marker_size: float = 0.05,  # meters
         target_distance: float = 0.15,
-        max_forward_speed: float = 0.4,
+        max_forward_speed: float = 0.5,
         max_rotation_speed: float = 0.5,
         # PID gains for distance control
         distance_kp: float = 1.0,
@@ -178,6 +180,9 @@ class ArUcoFollower:
         cx = width  / 2
         cy = height / 2
 
+        # fx = fy = 3385.7# test
+        # cx, cy = 2304, 1296
+
         # camera matrix
         self.camera_matrix = np.array([
             [fx,  0, cx],
@@ -185,12 +190,6 @@ class ArUcoFollower:
             [ 0,  0,  1]
         ], dtype=np.float32)
 
-        focal_length = 640.0
-        self.camera_matrix = np.array([
-            [focal_length, 0, 320],
-            [0, focal_length, 240],
-            [0, 0, 1]
-        ], dtype=np.float32)
         self.dist_coeffs = np.zeros((4, 1), dtype=np.float32)
 
     # -------------------------------------------------------
@@ -256,7 +255,7 @@ class ArUcoFollower:
                 if tz < self.target_distance:
                     self.car.drive(0, 0, 0)
                     # self.distance_pid.reset()
-                    self.angle_pid.reset()
+                    # self.angle_pid.reset()
                     continue
 
                 # ---- Forward speed using PID control on distance ----
@@ -264,11 +263,11 @@ class ArUcoFollower:
                 vy = self.distance_pid.update(distance_error, dt)
 
                 # ---- Rotation using PID control on angle ----
-                angle_error = tx#np.arctan2(tx, tz)
+                angle_error = np.arctan2(tx, tz)
                 rotation = self.angle_pid.update(angle_error, dt)
-
+                vy = 0
                 # Debug print sometimes
-                if random.random() > 0.75:
+                if random.random() > 0.25:
                     print(f"tz={tz:.2f}m  ty={ty:.2f}m  tx={tx:.2f}m  vy={vy:.2f}  rot={rotation:.2f}  "
                           f"dist_err={distance_error:.3f}  angle_err={angle_error:.3f}")
 
@@ -281,9 +280,10 @@ class ArUcoFollower:
                     self.car.drive(0, 0, 0)
                     self.distance_pid.reset()
                     self.angle_pid.reset()
+                    # pass
                 time.sleep(0.1)
 
-            time.sleep(0.01)
+            # time.sleep(0.01)
 
     # -------------------------------------------------------
     # POSE DETECTION
@@ -373,13 +373,14 @@ if __name__ == "__main__":
     follower = ArUcoFollower(
         car=car,
         marker_id=0,
-        target_distance=0.05,
+        target_distance=0.15,
+        marker_size=0.07, 
         # distance control
         distance_kp=0.8,
         distance_ki=0.00,
         distance_kd=0.00,
         # angle control
-        angle_kp=0.08,#0.08,
+        angle_kp=0.04,#0.08,
         angle_ki=0.00,
         angle_kd=0.00,
     )

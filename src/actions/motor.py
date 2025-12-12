@@ -148,6 +148,8 @@ class Motor:
         self.pwm.ChangeDutyCycle(duty_cycle)
     
     def set_direction(self, direction):
+        if self.direction == direction:
+            return
         self.direction = direction
         if direction == Direction.FORWARD:
             GPIO.output(self.ina_pin, GPIO.HIGH)
