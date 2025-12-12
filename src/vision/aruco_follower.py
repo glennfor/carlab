@@ -62,6 +62,43 @@ class PIDController:
         self.last_time = None
 
 
+
+def estimate_pose_single_markers(corners, marker_length, camera_matrix, dist_coeffs):
+    """
+    Custom re-implementation of cv2.aruco.estimatePoseSingleMarkers
+    """
+    # 3D points of marker corners in marker coordinate frame
+    half = marker_length / 2.0
+    obj_points = np.array([
+        [-half,  half, 0],  # top-left
+        [ half,  half, 0],  # top-right
+        [ half, -half, 0],  # bottom-right
+        [-half, -half, 0]   # bottom-left
+    ], dtype=np.float32)
+
+    rvecs = []
+    tvecs = []
+
+    for c in corners:
+        # c shape: (1, 4, 2) → we need (4, 2)
+        img_points = c.reshape(4, 2)
+
+        success, rvec, tvec = cv2.solvePnP(
+            obj_points,
+            img_points,
+            camera_matrix,
+            dist_coeffs,
+            flags=cv2.SOLVEPNP_IPPE_SQUARE  # best for planar square markers
+        )
+
+        if not success:
+            raise RuntimeError("solvePnP failed for a marker")
+
+        rvecs.append(rvec)
+        tvecs.append(tvec)
+
+    return np.array(rvecs), np.array(tvecs)
+
 class ArUcoFollower:
     """
     Follows a person holding an ArUco marker using **3D pose estimation**.
@@ -128,7 +165,8 @@ class ArUcoFollower:
             self.use_new_api = False
 
         # Camera calibration (approx)
-        focal_length = 640.0
+        # focal_length = 640.0
+        focal_length = 800.0
         self.camera_matrix = np.array([
             [focal_length, 0, 320],
             [0, focal_length, 240],
@@ -198,7 +236,7 @@ class ArUcoFollower:
                 # --- Ensure valid forward distance ---
                 if tz < self.target_distance:
                     self.car.drive(0, 0, 0)
-                    self.distance_pid.reset()
+                    # self.distance_pid.reset()
                     self.angle_pid.reset()
                     continue
 
@@ -212,9 +250,8 @@ class ArUcoFollower:
 
                 # Debug print sometimes
                 if random.random() > 0.9:
-                    pass
-                    # print(f"tz={tz:.2f}m  tx={tx:.2f}m  vy={vy:.2f}  rot={rotation:.2f}  "
-                    #       f"dist_err={distance_error:.3f}  angle_err={angle_error:.3f}")
+                    print(f"tz={tz:.2f}m  tx={tx:.2f}m  vy={vy:.2f}  rot={rotation:.2f}  "
+                          f"dist_err={distance_error:.3f}  angle_err={angle_error:.3f}")
 
                 # Drive robot
                 self.car.drive(0, vy, rotation)
@@ -264,14 +301,22 @@ class ArUcoFollower:
         # return True, tvec[0][0]  # return (tx,ty,tz)
         
 
-        rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(
+        # rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(
+        #     [marker_corners],
+        #     self.marker_size,
+        #     self.camera_matrix,
+        #     self.dist_coeffs
+        # )
+        rvecs, tvecs = estimate_pose_single_markers(
             [marker_corners],
             self.marker_size,
             self.camera_matrix,
             self.dist_coeffs
         )
-
-        return True, tvecs[0][0]  # return (tx, ty, tz)
+        # Return (tx, ty, tz)
+        return True, tvecs[0].flatten()
+        # return True, tvecs[0]  # return (tx, ty, tz)
+        # return True, tvecs[0][0]  # return (tx, ty, tz)
 
     # -------------------------------------------------------
 
@@ -300,7 +345,7 @@ if __name__ == "__main__":
     """Test ArUco following."""
     print("ArUco Follower Test")
     print("=" * 50)
-    print("Make sure you have an ArUco marker (ID 0, DICT_4X4_50)")
+    print("Make sure you have an ArUco marker (ID 0, DICT_6X6_50)")
     print("Hold it in front of the camera to start following")
     print("Press Ctrl+C to stop")
     print("=" * 50, cv2.__version__)
