@@ -38,11 +38,11 @@ class PIDController:
         p_term = self.kp * error
         
         # Integral term
-        self.integral += error * dt
+        self.integral += error ## * dt
         i_term = self.ki * self.integral
         
         # Derivative term
-        d_term = self.kd * (error - self.last_error) / dt if dt > 0 else 0.0
+        d_term = self.kd * (error - self.last_error)# / dt if dt > 0 else 0.0
         
         # Compute output
         output = p_term + i_term + d_term
@@ -265,11 +265,11 @@ class ArUcoFollower:
                 # ---- Rotation using PID control on angle ----
                 angle_error = np.arctan2(tx, tz)
                 rotation = self.angle_pid.update(angle_error, dt)
-                vy = 0
+                # rotation = 0
                 # Debug print sometimes
-                if random.random() > 0.25:
-                    print(f"tz={tz:.2f}m  ty={ty:.2f}m  tx={tx:.2f}m  vy={vy:.2f}  rot={rotation:.2f}  "
-                          f"dist_err={distance_error:.3f}  angle_err={angle_error:.3f}")
+                # if random.random() > 0.25:
+                #     print(f"tz={tz:.2f}m  ty={ty:.2f}m  tx={tx:.2f}m  vy={vy:.2f}  rot={rotation:.2f}  "
+                #           f"dist_err={distance_error:.3f}  angle_err={angle_error:.3f}")
 
                 # Drive robot
                 self.car.drive(0, vy, rotation)
@@ -382,7 +382,7 @@ if __name__ == "__main__":
         # angle control
         angle_kp=0.04,#0.08,
         angle_ki=0.00,
-        angle_kd=0.00,
+        angle_kd=0.08,
     )
     signal.signal(signal.SIGINT, lambda s, f: signal_handler(s, f, car, follower))
     signal.signal(signal.SIGTERM, lambda s, f: signal_handler(s, f, car, follower))

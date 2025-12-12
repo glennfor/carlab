@@ -258,7 +258,7 @@ def run_all_tests(tester):
 
 def run_command_line_mode(args):
     """Run specific tests from command line arguments."""
-    tester = MovementTester(default_speed=0.5, default_duration=2.0)
+    tester = MovementTester(default_speed=0.3, default_duration=2.0)
     
     try:
         if len(args) < 2:
