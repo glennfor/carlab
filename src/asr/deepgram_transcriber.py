@@ -170,6 +170,8 @@ class DeepgramTranscriber:
                 "smart_format": self.smart_format,
                 "interim_results": self.interim_results,
                 "utterance_end_ms": self.utterance_end_ms,
+                 # Time in milliseconds of silence to wait for before finalizing speech
+                "endpointing": 300
             }
 
             with self.client.listen.v1.connect(**options) as connection:
